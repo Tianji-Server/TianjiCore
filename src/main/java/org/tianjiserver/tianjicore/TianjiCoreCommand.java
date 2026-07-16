@@ -13,16 +13,18 @@ import revxrsal.commands.bukkit.annotation.CommandPermission;
  * TianjiCore 命令入口。
  * 负责对接命令框架，并将模块操作委托给模块辅助层。
  */
-@Command({"tianjicore", "tc"})
+@Command({"tianjicore", "tianji", "tc"})
 public class TianjiCoreCommand {
+
+    private static final String ITEM_LORE_MODULE_DISABLED_MESSAGE = "<red>物品签名锻造模块未启用";
 
     private final TianjiCoreModuleHelper moduleHelper;
     private final ItemLoreAndSignature itemLoreAndSignature;
     private final MiniMessage mini = MiniMessage.miniMessage();
 
     public TianjiCoreCommand(TianjiCore plugin) {
-        this.moduleHelper = new TianjiCoreModuleHelper(plugin);
         this.itemLoreAndSignature = new ItemLoreAndSignature(plugin);
+        this.moduleHelper = new TianjiCoreModuleHelper(plugin, itemLoreAndSignature);
     }
 
     /**
@@ -112,16 +114,16 @@ public class TianjiCoreCommand {
 
 
     /**
-     * 打开锻造 UI，允许玩家为手中物品追加一行 lore。
+     * 打开 lore 锻造 UI。
      */
     @CommandPermission("tianjicore.command.forge")
-    @Subcommand("forge")
+    @Subcommand({"forge", "lore"})
     public void handleForgeCommand(Player player) {
-        if (!moduleHelper.isModuleEnabled("itemloreandsignature")) {
-            player.sendMessage(mini.deserialize("<red>物品签名锻造模块未启用"));
-            return;
-        }
-        itemLoreAndSignature.openForgeUi(player);
+        moduleHelper.runWhenModuleEnabled(
+                ItemLoreAndSignature.MODULE_KEY,
+                () -> itemLoreAndSignature.openForgeUi(player),
+                () -> player.sendMessage(mini.deserialize(ITEM_LORE_MODULE_DISABLED_MESSAGE))
+        );
     }
 
     /**
@@ -130,9 +132,9 @@ public class TianjiCoreCommand {
     @Subcommand("help")
     public void handleHelpCommand(CommandSender sender) {
         sender.sendMessage(mini.deserialize("<yellow>命令帮助:"));
-        sender.sendMessage(mini.deserialize("<gray>/tc forge <white>打开锻造铁砧，为物品添加一行 lore"));
-        sender.sendMessage(mini.deserialize("<gray>/tc toggle <module> <white>开关指定模块"));
-        sender.sendMessage(mini.deserialize("<gray>/tc reload <module|plugin> <white>重载插件或指定模块"));
+        sender.sendMessage(mini.deserialize("<gray>/tianjicore forge <white>打开锻造铁砧，通过第二格按钮切换 lore 操作"));
+        sender.sendMessage(mini.deserialize("<gray>/tianjicore toggle <module> <white>开关指定模块"));
+        sender.sendMessage(mini.deserialize("<gray>/tianjicore reload <module|plugin> <white>重载插件或指定模块"));
         sender.sendMessage(mini.deserialize("<gray>可开关模块: <aqua>" + String.join(", ", moduleHelper.getToggleableModuleKeys())));
         sender.sendMessage(mini.deserialize("<gray>可重载模块: <aqua>" + String.join(", ", moduleHelper.getModuleKeys())));
         sender.sendMessage(mini.deserialize("<gray>插件重载参数: <aqua>" + moduleHelper.getReloadPluginTarget()));

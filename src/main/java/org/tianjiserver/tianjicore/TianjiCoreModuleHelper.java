@@ -1,5 +1,7 @@
 package org.tianjiserver.tianjicore;
 
+import org.tianjiserver.tianjicore.itemloreandsignature.ItemLoreAndSignature;
+
 import java.util.List;
 
 /**
@@ -10,8 +12,8 @@ class TianjiCoreModuleHelper {
 
     private final TianjiCoreModuleManager moduleManager;
 
-    TianjiCoreModuleHelper(TianjiCore plugin) {
-        this.moduleManager = new TianjiCoreModuleManager(plugin);
+    TianjiCoreModuleHelper(TianjiCore plugin, ItemLoreAndSignature itemLoreAndSignature) {
+        this.moduleManager = new TianjiCoreModuleManager(plugin, itemLoreAndSignature);
     }
 
     /**
@@ -26,6 +28,18 @@ class TianjiCoreModuleHelper {
      */
     void shutdown() {
         moduleManager.shutdown();
+    }
+
+    /**
+     * 在指定模块启用时执行操作
+     */
+    void runWhenModuleEnabled(String moduleInput, Runnable enabledAction, Runnable disabledAction) {
+        if (!moduleManager.isModuleEnabled(moduleInput)) {
+            disabledAction.run();
+            return;
+        }
+
+        enabledAction.run();
     }
 
     /**
@@ -63,10 +77,4 @@ class TianjiCoreModuleHelper {
         return moduleManager.getReloadPluginTarget();
     }
 
-    /**
-     * 指定模块当前是否启用
-     */
-    boolean isModuleEnabled(String moduleInput) {
-        return moduleManager.isModuleEnabled(moduleInput);
-    }
 }

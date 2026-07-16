@@ -6,10 +6,9 @@ modules:
   endermanmushroombugfix:
     enabled: true
   itemloreandsignature:
-    enabled: true
+    enabled: false
 
 itemloreandsignature:
   forge:
     cost: 1000.0
-    title: "物品锻造"
-    text: "输入要添加的 lore"
+    linear-increase-multiplier: 1.5
