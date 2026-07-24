@@ -4,7 +4,6 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.tianjiserver.tianjicore.feature.PhantomSpawnBlocker;
 import org.tianjiserver.tianjicore.fixer.EndermanMushroomBugFix;
-import org.tianjiserver.tianjicore.fixer.RecipeBugFix;
 import org.tianjiserver.tianjicore.itemloreandsignature.ItemLoreAndSignature;
 
 import java.util.ArrayList;
@@ -42,14 +41,6 @@ class TianjiCoreModuleManager {
 
     void bootstrap() {
         // 在这里集中声明模块，命令层无需感知具体模块实现。
-        registerModule(
-                "recipebugfix",
-                "配方修复",
-                false,
-                RecipeBugFix::new,
-                "recipe",
-                "recipes"
-        );
         registerModule(
                 "phantomspawnblocker",
                 "阻止幻翼生成",
