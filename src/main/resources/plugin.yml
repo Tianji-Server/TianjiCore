@@ -7,11 +7,8 @@ softdepend: [ Vault ]
 commands:
   tianjicore:
     description: TianjiCore 管理命令
-    usage: /tianjicore [forge|lore|toggle|reload]
+    usage: /tianjicore [help|status|toggle|reload]
 permissions:
-  tianjicore.command.forge:
-    description: 使用锻造命令添加、修改、删除物品 lore
-    default: true
   tianjicore.command.admin:
     description: 使用 TianjiCore 管理命令
     default: op

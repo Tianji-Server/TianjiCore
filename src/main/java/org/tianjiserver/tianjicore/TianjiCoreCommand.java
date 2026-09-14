@@ -1,9 +1,9 @@
 package org.tianjiserver.tianjicore;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.tianjiserver.tianjicore.itemloreandsignature.ItemLoreAndSignature;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
@@ -16,15 +16,11 @@ import revxrsal.commands.bukkit.annotation.CommandPermission;
 @Command({"tianjicore", "tianji", "tc"})
 public class TianjiCoreCommand {
 
-    private static final String ITEM_LORE_MODULE_DISABLED_MESSAGE = "<red>物品签名锻造模块未启用";
-
     private final TianjiCoreModuleHelper moduleHelper;
-    private final ItemLoreAndSignature itemLoreAndSignature;
     private final MiniMessage mini = MiniMessage.miniMessage();
 
     public TianjiCoreCommand(TianjiCore plugin) {
-        this.itemLoreAndSignature = new ItemLoreAndSignature(plugin);
-        this.moduleHelper = new TianjiCoreModuleHelper(plugin, itemLoreAndSignature);
+        this.moduleHelper = new TianjiCoreModuleHelper(plugin);
     }
 
     /**
@@ -98,13 +94,16 @@ public class TianjiCoreCommand {
                 break;
 
             case FAILED:
-                var moduleInfo = result.moduleInfo();
-                sender.sendMessage(mini.deserialize(
-                        "<red>模块重载失败: " + moduleInfo.displayName()));
+                sender.sendMessage(Component.text("重载失败:", NamedTextColor.RED));
+                for (var failure : result.failures()) {
+                    // 异常文本按纯文本显示，避免其中的标签被 MiniMessage 解析。
+                    sender.sendMessage(Component.text(
+                            failure.target() + ": " + failure.reason(), NamedTextColor.RED));
+                }
                 break;
 
             case SUCCESS_MODULE:
-                moduleInfo = result.moduleInfo();
+                var moduleInfo = result.moduleInfo();
                 sender.sendMessage(mini.deserialize(
                         "<green>" + moduleInfo.displayName() + " 已重载，当前状态: "
                                 + (moduleInfo.enabled() ? "<green>开启" : "<red>关闭")));
@@ -112,18 +111,19 @@ public class TianjiCoreCommand {
         }
     }
 
-
     /**
-     * 打开 lore 锻造 UI。
+     * 查看全部模块的实际运行状态。
      */
-    @CommandPermission("tianjicore.command.forge")
-    @Subcommand({"forge", "lore"})
-    public void handleForgeCommand(Player player) {
-        moduleHelper.runWhenModuleEnabled(
-                ItemLoreAndSignature.MODULE_KEY,
-                () -> itemLoreAndSignature.openForgeUi(player),
-                () -> player.sendMessage(mini.deserialize(ITEM_LORE_MODULE_DISABLED_MESSAGE))
-        );
+    @CommandPermission("tianjicore.command.admin")
+    @Subcommand("status")
+    public void handleStatusCommand(CommandSender sender) {
+        sender.sendMessage(Component.text("模块运行状态:", NamedTextColor.YELLOW));
+        for (var module : moduleHelper.getModuleInfos()) {
+            sender.sendMessage(Component.text(module.displayName() + " (" + module.key() + "): ",
+                            NamedTextColor.GRAY)
+                    .append(Component.text(module.enabled() ? "开启" : "关闭",
+                            module.enabled() ? NamedTextColor.GREEN : NamedTextColor.RED)));
+        }
     }
 
     /**
@@ -132,7 +132,7 @@ public class TianjiCoreCommand {
     @Subcommand("help")
     public void handleHelpCommand(CommandSender sender) {
         sender.sendMessage(mini.deserialize("<yellow>命令帮助:"));
-        sender.sendMessage(mini.deserialize("<gray>/tianjicore forge <white>打开锻造铁砧，通过第二格按钮切换 lore 操作"));
+        sender.sendMessage(mini.deserialize("<gray>/tianjicore status <white>查看所有模块的运行状态"));
         sender.sendMessage(mini.deserialize("<gray>/tianjicore toggle <module> <white>开关指定模块"));
         sender.sendMessage(mini.deserialize("<gray>/tianjicore reload <module|plugin> <white>重载插件或指定模块"));
         sender.sendMessage(mini.deserialize("<gray>可开关模块: <aqua>" + String.join(", ", moduleHelper.getToggleableModuleKeys())));

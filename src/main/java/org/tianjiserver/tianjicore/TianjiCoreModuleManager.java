@@ -1,13 +1,14 @@
 package org.tianjiserver.tianjicore;
 
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.tianjiserver.tianjicore.feature.FirstJoinMessage;
 import org.tianjiserver.tianjicore.feature.PhantomSpawnBlocker;
-import org.tianjiserver.tianjicore.fixer.EndermanMushroomBugFix;
+import org.tianjiserver.tianjicore.fixer.EndermanBlockMoveBlocker;
 import org.tianjiserver.tianjicore.fixer.RecipeBugFix;
-import org.tianjiserver.tianjicore.itemloreandsignature.ItemLoreAndSignature;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -32,13 +34,11 @@ class TianjiCoreModuleManager {
     );
 
     private final TianjiCore plugin;
-    private final ItemLoreAndSignature itemLoreAndSignature;
     private final Map<String, ModuleState> modules = new LinkedHashMap<>();
     private final Map<String, String> moduleAliasIndex = new LinkedHashMap<>();
 
-    TianjiCoreModuleManager(TianjiCore plugin, ItemLoreAndSignature itemLoreAndSignature) {
+    TianjiCoreModuleManager(TianjiCore plugin) {
         this.plugin = plugin;
-        this.itemLoreAndSignature = itemLoreAndSignature;
     }
 
     void bootstrap() {
@@ -69,20 +69,12 @@ class TianjiCoreModuleManager {
         );
         registerModule(
                 "endermanmushroombugfix",
-                "末地蘑菇修复",
+                "禁止末影人搬动方块",
                 false,
-                EndermanMushroomBugFix::new,
+                EndermanBlockMoveBlocker::new,
                 "enderman",
+                "endermanblockmoveblocker",
                 "mushroomfix"
-        );
-        registerModule(
-                ItemLoreAndSignature.MODULE_KEY,
-                "物品签名锻造",
-                true,
-                () -> itemLoreAndSignature,
-                "itemsign",
-                "forge",
-                "lore"
         );
 
         plugin.getConfig().options().copyDefaults(true);
@@ -130,28 +122,34 @@ class TianjiCoreModuleManager {
      */
     ReloadResult reload(String rawTargetInput) {
         String target = normalize(rawTargetInput);
-        if (RELOAD_PLUGIN_ALIASES.contains(target)) {
-            // 插件级重载：重读配置并按新配置刷新全部模块。
-            plugin.reloadConfig();
-            applyConfigStates(true);
-            return new ReloadResult(ReloadStatus.SUCCESS_PLUGIN, null);
-        }
-
+        boolean reloadPlugin = RELOAD_PLUGIN_ALIASES.contains(target);
         ModuleState module = findModule(rawTargetInput);
-        if (module == null) {
-            return new ReloadResult(ReloadStatus.UNKNOWN_MODULE, null);
+        if (!reloadPlugin && module == null) {
+            return new ReloadResult(ReloadStatus.UNKNOWN_MODULE, null, List.of());
         }
 
-        plugin.reloadConfig();
-        boolean shouldEnable = plugin.getConfig().getBoolean(moduleConfigPath(module.key), true);
-        if (shouldEnable && !restartModule(module)) {
-            return new ReloadResult(ReloadStatus.FAILED, module.toInfo());
-        }
-        if (!shouldEnable) {
-            stopModule(module);
+        try {
+            // reloadConfig 本身会记录并吞掉 YAML 加载错误，先校验以避免误报成功。
+            File configFile = new File(plugin.getDataFolder(), "config.yml");
+            if (configFile.exists()) {
+                new YamlConfiguration().load(configFile);
+            }
+            plugin.reloadConfig();
+        } catch (Exception exception) {
+            plugin.getLogger().log(Level.SEVERE, "插件配置重载失败", exception);
+            return new ReloadResult(ReloadStatus.FAILED, null,
+                    List.of(new ReloadFailure("config.yml", failureReason(exception))));
         }
 
-        return new ReloadResult(ReloadStatus.SUCCESS_MODULE, module.toInfo());
+        if (reloadPlugin) {
+            List<ReloadFailure> failures = applyConfigStates(true);
+            return new ReloadResult(failures.isEmpty() ? ReloadStatus.SUCCESS_PLUGIN : ReloadStatus.FAILED,
+                    null, failures);
+        }
+
+        ReloadFailure failure = applyConfigState(module, true);
+        return new ReloadResult(failure == null ? ReloadStatus.SUCCESS_MODULE : ReloadStatus.FAILED,
+                module.toInfo(), failure == null ? List.of() : List.of(failure));
     }
 
     /**
@@ -179,6 +177,13 @@ class TianjiCoreModuleManager {
     }
 
     /**
+     * 返回模块实际运行状态，而非配置中的目标状态。
+     */
+    List<ModuleInfo> getModuleInfos() {
+        return modules.values().stream().map(ModuleState::toInfo).toList();
+    }
+
+    /**
      * 返回允许 toggle 的模块主键。
      */
     List<String> getToggleableModuleKeys() {
@@ -188,28 +193,33 @@ class TianjiCoreModuleManager {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 判断指定模块是否处于启用状态。
-     */
-    boolean isModuleEnabled(String rawModuleInput) {
-        ModuleState module = findModule(rawModuleInput);
-        return module != null && module.enabled;
+    private List<ReloadFailure> applyConfigStates(boolean forceRestartEnabledModule) {
+        List<ReloadFailure> failures = new ArrayList<>();
+        for (ModuleState module : modules.values()) {
+            ReloadFailure failure = applyConfigState(module, forceRestartEnabledModule);
+            if (failure != null) {
+                failures.add(failure);
+            }
+        }
+        return List.copyOf(failures);
     }
 
-    private void applyConfigStates(boolean forceRestartEnabledModule) {
-        // 根据配置统一校准模块状态，避免内存状态与配置不一致。
-        modules.values().forEach(module -> {
+    private ReloadFailure applyConfigState(ModuleState module, boolean forceRestartEnabledModule) {
+        try {
             boolean shouldEnable = plugin.getConfig().getBoolean(moduleConfigPath(module.key), true);
             if (shouldEnable) {
-                if (forceRestartEnabledModule) {
-                    restartModule(module);
-                } else {
-                    startModule(module);
+                boolean started = forceRestartEnabledModule ? restartModule(module) : startModule(module);
+                if (!started) {
+                    return new ReloadFailure(module.key, module.lastFailure);
                 }
             } else {
                 stopModule(module);
             }
-        });
+            return null;
+        } catch (Exception exception) {
+            plugin.getLogger().log(Level.SEVERE, "模块配置应用失败: " + module.key, exception);
+            return new ReloadFailure(module.key, failureReason(exception));
+        }
     }
 
     private boolean restartModule(ModuleState module) {
@@ -223,15 +233,17 @@ class TianjiCoreModuleManager {
         }
 
         try {
-            // 通过工厂获取监听器实例，让需要保存 UI 状态的模块可复用同一对象。
+            // 通过工厂创建模块监听器实例。
             Listener listener = module.listenerFactory.get();
             plugin.getServer().getPluginManager().registerEvents(listener, plugin);
             module.listenerInstance = listener;
             module.enabled = true;
+            module.lastFailure = null;
             plugin.getLogger().info("模块已开启: " + module.key);
             return true;
         } catch (Exception exception) {
-            plugin.getLogger().severe("模块开启失败: " + module.key + "，原因: " + exception.getMessage());
+            module.lastFailure = failureReason(exception);
+            plugin.getLogger().log(Level.SEVERE, "模块开启失败: " + module.key, exception);
             module.listenerInstance = null;
             module.enabled = false;
             return false;
@@ -299,6 +311,12 @@ class TianjiCoreModuleManager {
         return input.toLowerCase(Locale.ROOT).trim();
     }
 
+    private static String failureReason(Exception exception) {
+        String message = exception.getMessage();
+        return exception.getClass().getSimpleName()
+                + (message == null || message.isBlank() ? "" : ": " + message);
+    }
+
     /**
      * toggle 操作返回状态。
      */
@@ -332,9 +350,18 @@ class TianjiCoreModuleManager {
     }
 
     /**
+     * 重载失败的目标及原因。
+     */
+    record ReloadFailure(String target, String reason) {
+    }
+
+    /**
      * reload 操作结果对象。
      */
-    record ReloadResult(ReloadStatus status, ModuleInfo moduleInfo) {
+    record ReloadResult(ReloadStatus status, ModuleInfo moduleInfo, List<ReloadFailure> failures) {
+        ReloadResult {
+            failures = List.copyOf(failures);
+        }
     }
 
     private static class ModuleState {
@@ -344,6 +371,7 @@ class TianjiCoreModuleManager {
         private final Supplier<? extends Listener> listenerFactory;
         private Listener listenerInstance;
         private boolean enabled;
+        private String lastFailure;
 
         private ModuleState(
                 String key,

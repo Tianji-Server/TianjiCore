@@ -5,15 +5,9 @@ modules:
     enabled: true
   phantomspawnblocker:
     enabled: true
+  # 禁止末影人搬动所有方块，保留旧配置键以兼容已有配置。
   endermanmushroombugfix:
     enabled: true
-  itemloreandsignature:
-    enabled: false
 
 first-join-message:
   message: "<gold>欢迎首次加入服务器！"
-
-itemloreandsignature:
-  forge:
-    cost: 1000.0
-    linear-increase-multiplier: 1.5
