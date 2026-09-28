@@ -10,6 +10,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.tianjiserver.tianjicore.TianjiCore;
 
 import java.io.File;
@@ -22,7 +24,8 @@ import java.util.UUID;
 public class NewbieManager implements Listener {
 
     private static final int INITIAL_PROTECTION_USES = 3;
-    private static final int BREAD_AMOUNT = 16;
+    static final int BREAD_AMOUNT = 16;
+    private static final int NEWBIE_EFFECT_DURATION_TICKS = 20 * 60 * 10;
 
     private final TianjiCore plugin;
     private final File dataFile;
@@ -47,13 +50,29 @@ public class NewbieManager implements Listener {
         }
 
         data.set(playerPath + ".protection-uses", INITIAL_PROTECTION_USES);
-        data.set(playerPath + ".bread-claimed", false);
-        saveData();
+        data.set(playerPath + ".bread-claimed", true);
+        if (!saveData()) {
+            data.set(playerPath, null);
+            return;
+        }
+
+        applyNewbieEffects(player);
+        giveBread(player);
+    }
+
+    void applyNewbieEffects(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE,
+                NEWBIE_EFFECT_DURATION_TICKS, 2));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION,
+                NEWBIE_EFFECT_DURATION_TICKS, 0));
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+        if (event.getFinalDamage() < player.getHealth()) {
             return;
         }
 
@@ -67,13 +86,11 @@ public class NewbieManager implements Listener {
         player.playEffect(EntityEffect.TOTEM_RESURRECT);
         data.set(protectionPath, remainingUses - 1);
         saveData();
+        player.sendMessage("剩余无敌次数：" + (remainingUses - 1));
     }
 
     public BreadClaimResult claimBread(Player player) {
         String playerPath = playerPath(player.getUniqueId());
-        if (!data.contains(playerPath)) {
-            return BreadClaimResult.NOT_ELIGIBLE;
-        }
         if (data.getBoolean(playerPath + ".bread-claimed")) {
             return BreadClaimResult.ALREADY_CLAIMED;
         }
@@ -84,9 +101,13 @@ public class NewbieManager implements Listener {
             return BreadClaimResult.SAVE_FAILED;
         }
 
+        giveBread(player);
+        return BreadClaimResult.SUCCESS;
+    }
+
+    void giveBread(Player player) {
         var overflow = player.getInventory().addItem(new ItemStack(Material.BREAD, BREAD_AMOUNT));
         overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
-        return BreadClaimResult.SUCCESS;
     }
 
     private String playerPath(UUID playerId) {
@@ -98,7 +119,7 @@ public class NewbieManager implements Listener {
             data.save(dataFile);
             return true;
         } catch (IOException exception) {
-            plugin.getLogger().severe("无法保存新手数据: " + exception.getMessage());
+            plugin.getLogger().severe("无法保存新手数据：" + exception.getMessage());
             return false;
         }
     }

@@ -130,15 +130,15 @@ public class TianjiCoreCommand {
 
     public void handleNewbieCommand(CommandSender sender) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(mini.deserialize("<red>只有玩家可以领取新手面包"));
+            sender.sendMessage(mini.deserialize("<red>只有玩家可以领取新手礼包"));
             return;
         }
 
         switch (moduleHelper.claimNewbieBread(player)) {
                 case SUCCESS -> player.sendMessage(mini.deserialize(
                     "<green>你领取了16个面包。首次进服免伤无法通过命令领取。"));
-            case ALREADY_CLAIMED -> player.sendMessage(mini.deserialize("<yellow>你已经领取过新手面包了"));
-            case NOT_ELIGIBLE -> player.sendMessage(mini.deserialize("<red>只有首次进服的玩家可以领取新手面包"));
+                case ALREADY_CLAIMED -> player.sendMessage(mini.deserialize(
+                    "<yellow>你已经领取过新手礼包，不能重复领取"));
             case SAVE_FAILED -> player.sendMessage(mini.deserialize("<red>领取失败，请稍后再试"));
         }
     }
