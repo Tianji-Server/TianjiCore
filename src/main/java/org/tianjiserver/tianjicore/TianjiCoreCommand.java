@@ -136,7 +136,7 @@ public class TianjiCoreCommand {
 
         switch (moduleHelper.claimNewbieBread(player)) {
                 case SUCCESS -> player.sendMessage(mini.deserialize(
-                    "<green>你领取了16个面包。首次进服免伤无法通过命令领取。"));
+                    "<green>你领取了16个面包。首次进服还会自动获得3个不死图腾。"));
                 case ALREADY_CLAIMED -> player.sendMessage(mini.deserialize(
                     "<yellow>你已经领取过新手礼包，不能重复领取"));
             case SAVE_FAILED -> player.sendMessage(mini.deserialize("<red>领取失败，请稍后再试"));

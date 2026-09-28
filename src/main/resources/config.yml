@@ -10,4 +10,4 @@ modules:
     enabled: true
 
 first-join-message:
-  message: "<gold>欢迎来到高难服！首次进服已发放16个面包，并获得10分钟抗性提升III和生命恢复。"
+  message: "<gold>欢迎来到高难服！首次进服已发放16个面包和3个不死图腾，并获得10分钟抗性提升III和生命恢复。"
