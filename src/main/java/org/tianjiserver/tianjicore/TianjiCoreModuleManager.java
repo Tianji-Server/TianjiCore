@@ -4,7 +4,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.tianjiserver.tianjicore.feature.FirstJoinMessage;
-import org.tianjiserver.tianjicore.feature.PhantomSpawnBlocker;
 import org.tianjiserver.tianjicore.fixer.EndermanBlockMoveBlocker;
 import org.tianjiserver.tianjicore.fixer.RecipeBugFix;
 
@@ -52,20 +51,19 @@ class TianjiCoreModuleManager {
             "firstjoin"
         );
         registerModule(
+                "newbie",
+                "新手保护与面包",
+                true,
+                () -> plugin.getNewbieManager(),
+                "newplayer"
+        );
+        registerModule(
                 "recipebugfix",
                 "配方修复",
                 false,
                 RecipeBugFix::new,
                 "recipe",
                 "recipes"
-        );
-        registerModule(
-                "phantomspawnblocker",
-                "阻止幻翼生成",
-                true,
-                PhantomSpawnBlocker::new,
-                "phantom",
-                "phantomblocker"
         );
         registerModule(
                 "endermanmushroombugfix",
@@ -181,6 +179,12 @@ class TianjiCoreModuleManager {
      */
     List<ModuleInfo> getModuleInfos() {
         return modules.values().stream().map(ModuleState::toInfo).toList();
+    }
+
+    org.tianjiserver.tianjicore.feature.NewbieManager.BreadClaimResult claimNewbieBread(
+            org.bukkit.entity.Player player
+    ) {
+        return plugin.getNewbieManager().claimBread(player);
     }
 
     /**

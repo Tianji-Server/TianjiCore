@@ -1,6 +1,7 @@
 package org.tianjiserver.tianjicore;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.tianjiserver.tianjicore.feature.NewbieManager;
 import revxrsal.commands.bukkit.BukkitLamp;
 
 /**
@@ -11,6 +12,7 @@ public class TianjiCore extends JavaPlugin {
 
     private static TianjiCore instance;
     private TianjiCoreCommand commandHandler;
+    private NewbieManager newbieManager;
 
     /**
      * 插件启用入口：初始化配置、模块与命令注册。
@@ -20,9 +22,15 @@ public class TianjiCore extends JavaPlugin {
         instance = this;
 
         saveDefaultConfig();
+        newbieManager = new NewbieManager(this);
 
         commandHandler = new TianjiCoreCommand(this);
         commandHandler.bootstrap();
+
+        getCommand("newbie").setExecutor((sender, command, label, args) -> {
+            commandHandler.handleNewbieCommand(sender);
+            return true;
+        });
 
         var lamp = BukkitLamp.builder(this).build();
         lamp.register(commandHandler);
@@ -45,5 +53,9 @@ public class TianjiCore extends JavaPlugin {
      */
     public static TianjiCore getInstance() {
         return instance;
+    }
+
+    public NewbieManager getNewbieManager() {
+        return newbieManager;
     }
 }

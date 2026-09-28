@@ -4,6 +4,8 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.tianjiserver.tianjicore.feature.NewbieManager;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
@@ -94,7 +96,7 @@ public class TianjiCoreCommand {
                 break;
 
             case FAILED:
-                sender.sendMessage(Component.text("重载失败:", NamedTextColor.RED));
+                sender.sendMessage(Component.text("重载失败：", NamedTextColor.RED));
                 for (var failure : result.failures()) {
                     // 异常文本按纯文本显示，避免其中的标签被 MiniMessage 解析。
                     sender.sendMessage(Component.text(
@@ -117,12 +119,27 @@ public class TianjiCoreCommand {
     @CommandPermission("tianjicore.command.admin")
     @Subcommand("status")
     public void handleStatusCommand(CommandSender sender) {
-        sender.sendMessage(Component.text("模块运行状态:", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("模块运行状态：", NamedTextColor.YELLOW));
         for (var module : moduleHelper.getModuleInfos()) {
             sender.sendMessage(Component.text(module.displayName() + " (" + module.key() + "): ",
                             NamedTextColor.GRAY)
                     .append(Component.text(module.enabled() ? "开启" : "关闭",
                             module.enabled() ? NamedTextColor.GREEN : NamedTextColor.RED)));
+        }
+    }
+
+    public void handleNewbieCommand(CommandSender sender) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(mini.deserialize("<red>只有玩家可以领取新手面包"));
+            return;
+        }
+
+        switch (moduleHelper.claimNewbieBread(player)) {
+                case SUCCESS -> player.sendMessage(mini.deserialize(
+                    "<green>你领取了16个面包。首次进服免伤无法通过命令领取。"));
+            case ALREADY_CLAIMED -> player.sendMessage(mini.deserialize("<yellow>你已经领取过新手面包了"));
+            case NOT_ELIGIBLE -> player.sendMessage(mini.deserialize("<red>只有首次进服的玩家可以领取新手面包"));
+            case SAVE_FAILED -> player.sendMessage(mini.deserialize("<red>领取失败，请稍后再试"));
         }
     }
 

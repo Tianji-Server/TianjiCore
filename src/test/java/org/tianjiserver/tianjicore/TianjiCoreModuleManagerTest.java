@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
+import org.tianjiserver.tianjicore.feature.NewbieManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -37,12 +38,13 @@ class TianjiCoreModuleManagerTest {
         Server server = mock(Server.class);
         pluginManager = mock(PluginManager.class);
         config = new YamlConfiguration();
-        for (String key : List.of("firstjoinmessage", "recipebugfix", "phantomspawnblocker",
+        for (String key : List.of("firstjoinmessage", "newbie", "recipebugfix",
                 "endermanmushroombugfix")) {
             config.set("modules." + key + ".enabled", false);
         }
         when(plugin.getConfig()).thenReturn(config);
         when(plugin.getDataFolder()).thenReturn(dataFolder.toFile());
+        when(plugin.getNewbieManager()).thenReturn(mock(NewbieManager.class));
         when(plugin.getLogger()).thenReturn(mock(Logger.class));
         when(plugin.getServer()).thenReturn(server);
         when(server.getPluginManager()).thenReturn(pluginManager);
@@ -52,17 +54,17 @@ class TianjiCoreModuleManagerTest {
 
     @Test
     void wholeReloadSucceedsWithMixedEnabledAndDisabledModules() {
-        enable("phantomspawnblocker");
+        enable("newbie");
         var result = manager.reload("ALL");
         assertEquals(SUCCESS_PLUGIN, result.status());
         assertTrue(result.failures().isEmpty());
-        assertEquals(List.of(false, false, true, false), states());
+        assertEquals(List.of(false, true, false, false), states());
     }
 
     @Test
     void wholeReloadReportsEveryFailureAndContinuesToLaterModules() {
         enable("firstjoinmessage");
-        enable("phantomspawnblocker");
+        enable("newbie");
         enable("endermanmushroombugfix");
         doThrow(new IllegalStateException("first failure"))
                 .doThrow(new IllegalArgumentException("second failure"))
@@ -70,7 +72,7 @@ class TianjiCoreModuleManagerTest {
 
         var result = manager.reload("plugin");
         assertEquals(FAILED, result.status());
-        assertEquals(List.of("firstjoinmessage", "phantomspawnblocker"),
+        assertEquals(List.of("firstjoinmessage", "newbie"),
                 result.failures().stream().map(TianjiCoreModuleManager.ReloadFailure::target).toList());
         assertTrue(result.failures().get(0).reason().contains("first failure"));
         assertTrue(result.failures().get(1).reason().contains("second failure"));
@@ -80,16 +82,16 @@ class TianjiCoreModuleManagerTest {
 
     @Test
     void singleReloadReportsReasonAndLaterSuccessClearsFailure() {
-        enable("phantomspawnblocker");
+        enable("newbie");
         doThrow(new IllegalStateException("registration failed"))
                 .doNothing().when(pluginManager).registerEvents(any(Listener.class), eq(plugin));
 
-        var failure = manager.reload("phantom");
+        var failure = manager.reload("newbie");
         assertEquals(FAILED, failure.status());
         assertFalse(failure.moduleInfo().enabled());
         assertEquals("IllegalStateException: registration failed", failure.failures().getFirst().reason());
 
-        var success = manager.reload("phantom");
+        var success = manager.reload("newbie");
         assertEquals(SUCCESS_MODULE, success.status());
         assertTrue(success.moduleInfo().enabled());
         assertTrue(success.failures().isEmpty());
@@ -97,18 +99,18 @@ class TianjiCoreModuleManagerTest {
 
     @Test
     void exceptionWithoutMessageStillHasReadableReason() {
-        enable("phantomspawnblocker");
+        enable("newbie");
         doThrow(new IllegalStateException()).when(pluginManager)
                 .registerEvents(any(Listener.class), eq(plugin));
-        assertEquals("IllegalStateException", manager.reload("phantom").failures().getFirst().reason());
+        assertEquals("IllegalStateException", manager.reload("newbie").failures().getFirst().reason());
     }
 
     @Test
     void reloadingDisabledConfigurationStopsRunningModuleSuccessfully() {
-        enable("phantomspawnblocker");
-        manager.reload("phantom");
-        config.set("modules.phantomspawnblocker.enabled", false);
-        var result = manager.reload("phantom");
+        enable("newbie");
+        manager.reload("newbie");
+        config.set("modules.newbie.enabled", false);
+        var result = manager.reload("newbie");
         assertEquals(SUCCESS_MODULE, result.status());
         assertFalse(result.moduleInfo().enabled());
         assertTrue(result.failures().isEmpty());
@@ -117,16 +119,16 @@ class TianjiCoreModuleManagerTest {
 
     @Test
     void singleReloadDoesNotApplyOtherModuleChanges() {
-        enable("phantomspawnblocker");
+        enable("newbie");
         enable("endermanmushroombugfix");
-        manager.reload("phantom");
-        assertEquals(List.of(false, false, true, false), states());
+        manager.reload("newbie");
+        assertEquals(List.of(false, true, false, false), states());
     }
 
     @Test
     void malformedYamlReportsConfigurationFailureAndPreservesRunningModules() throws Exception {
-        enable("phantomspawnblocker");
-        manager.reload("phantom");
+        enable("newbie");
+        manager.reload("newbie");
         clearInvocations(plugin);
         Files.writeString(dataFolder.resolve("config.yml"), "modules: [unterminated");
 
@@ -134,7 +136,7 @@ class TianjiCoreModuleManagerTest {
         assertEquals(FAILED, result.status());
         assertEquals("config.yml", result.failures().getFirst().target());
         assertTrue(result.failures().getFirst().reason().contains("InvalidConfigurationException"));
-        assertEquals(List.of(false, false, true, false), states());
+        assertEquals(List.of(false, true, false, false), states());
         verify(plugin, never()).reloadConfig();
     }
 
@@ -157,13 +159,13 @@ class TianjiCoreModuleManagerTest {
     void failedReloadCommandReportsReasonAsLiteralTextWithoutSuccessMessage() {
         TianjiCoreCommand command = new TianjiCoreCommand(plugin);
         command.bootstrap();
-        enable("phantomspawnblocker");
+        enable("newbie");
         doThrow(new IllegalStateException("bad <red>value"))
                 .when(pluginManager).registerEvents(any(Listener.class), eq(plugin));
         CommandSender sender = mock(CommandSender.class);
 
         command.handleReloadCommand(sender, "plugin");
-        assertEquals(List.of("重载失败:", "phantomspawnblocker: IllegalStateException: bad <red>value"),
+        assertEquals(List.of("重载失败：", "newbie: IllegalStateException: bad <red>value"),
                 messages(sender, 2));
     }
 
@@ -171,15 +173,15 @@ class TianjiCoreModuleManagerTest {
     void statusCommandDisplaysActualStateInsteadOfUnappliedConfig() {
         TianjiCoreCommand command = new TianjiCoreCommand(plugin);
         command.bootstrap();
-        enable("phantomspawnblocker");
-        command.handleReloadCommand(mock(CommandSender.class), "phantom");
+        enable("newbie");
+        command.handleReloadCommand(mock(CommandSender.class), "newbie");
         enable("endermanmushroombugfix");
         CommandSender sender = mock(CommandSender.class);
         command.handleStatusCommand(sender);
 
-        assertEquals(List.of("模块运行状态:", "首次进服消息 (firstjoinmessage): 关闭",
-                "配方修复 (recipebugfix): 关闭", "阻止幻翼生成 (phantomspawnblocker): 开启",
-                "禁止末影人搬动方块 (endermanmushroombugfix): 关闭"), messages(sender, 5));
+        assertEquals(List.of("模块运行状态：", "首次进服消息 (firstjoinmessage): 关闭",
+            "新手保护与面包 (newbie): 开启", "配方修复 (recipebugfix): 关闭",
+            "禁止末影人搬动方块 (endermanmushroombugfix): 关闭"), messages(sender, 5));
     }
 
     private void enable(String key) {

@@ -8,6 +8,9 @@ commands:
   tianjicore:
     description: TianjiCore 管理命令
     usage: /tianjicore [help|status|toggle|reload]
+  newbie:
+    description: 领取一次新手面包
+    usage: /newbie
 permissions:
   tianjicore.command.admin:
     description: 使用 TianjiCore 管理命令

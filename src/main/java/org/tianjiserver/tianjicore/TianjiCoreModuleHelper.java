@@ -1,5 +1,8 @@
 package org.tianjiserver.tianjicore;
 
+import org.bukkit.entity.Player;
+import org.tianjiserver.tianjicore.feature.NewbieManager;
+
 import java.util.List;
 
 /**
@@ -40,6 +43,10 @@ class TianjiCoreModuleHelper {
      */
     TianjiCoreModuleManager.ReloadResult reloadModule(String moduleInput) {
         return moduleManager.reload(moduleInput);
+    }
+
+    NewbieManager.BreadClaimResult claimNewbieBread(Player player) {
+        return moduleManager.claimNewbieBread(player);
     }
 
     /**

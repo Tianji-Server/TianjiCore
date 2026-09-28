@@ -1,13 +1,13 @@
 modules:
   firstjoinmessage:
     enabled: true
-  recipebugfix:
+  newbie:
     enabled: true
-  phantomspawnblocker:
+  recipebugfix:
     enabled: true
   # 禁止末影人搬动所有方块，保留旧配置键以兼容已有配置。
   endermanmushroombugfix:
     enabled: true
 
 first-join-message:
-  message: "<gold>欢迎首次加入服务器！"
+  message: "<gold>欢迎来到高难服，你可以通过 /newbie 领取一次新手面包。"
