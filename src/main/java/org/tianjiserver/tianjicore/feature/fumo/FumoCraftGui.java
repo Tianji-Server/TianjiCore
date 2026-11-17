@@ -33,6 +33,7 @@ public class FumoCraftGui {
 
     private static final int GUI_SIZE = 27;
     private static final int CONFIRM_SLOT = 17;
+    private static final int DERIVATIVE_NOTICE_SLOT = 25;
     private static final int CANCEL_SLOT = 26;
     private static final int INFO_SLOT = 8;
 
@@ -64,7 +65,7 @@ public class FumoCraftGui {
         GuiHolder holder = new GuiHolder(player.getUniqueId(), targetName);
         Inventory inventory = Bukkit.createInventory(holder, GUI_SIZE, title);
         holder.bindInventory(inventory);
-        populateDecorations(inventory, targetName);
+        populateDecorations(inventory, targetName, holder.derivativeNoticeEnabled());
 
         activeSessions.put(player.getUniqueId(), holder);
         player.openInventory(inventory);
@@ -113,6 +114,15 @@ public class FumoCraftGui {
         if (rawSlot == CONFIRM_SLOT) {
             event.setCancelled(true);
             handleConfirm(player, holder);
+            return;
+        }
+        if (rawSlot == DERIVATIVE_NOTICE_SLOT) {
+            event.setCancelled(true);
+            holder.toggleDerivativeNotice();
+            holder.inventory().setItem(
+                    DERIVATIVE_NOTICE_SLOT,
+                    createDerivativeNoticeButton(holder.derivativeNoticeEnabled())
+            );
             return;
         }
         if (rawSlot == CANCEL_SLOT) {
@@ -200,7 +210,11 @@ public class FumoCraftGui {
             return;
         }
 
-        ItemStack fumoItem = codec.createFumoItem(slots, holder.targetDisplayName());
+        ItemStack fumoItem = codec.createFumoItem(
+                slots,
+                holder.targetDisplayName(),
+                holder.derivativeNoticeEnabled()
+        );
         clearInputSlots(holder.inventory());
         holder.markCompleted();
         activeSessions.remove(player.getUniqueId(), holder);
@@ -271,7 +285,11 @@ public class FumoCraftGui {
         }
     }
 
-    private static void populateDecorations(Inventory inventory, Component targetName) {
+    private static void populateDecorations(
+            Inventory inventory,
+            Component targetName,
+            boolean derivativeNoticeEnabled
+    ) {
         ItemStack filler = createButton(Material.GRAY_STAINED_GLASS_PANE, Component.text(" "), List.of());
         for (int i = 0; i < GUI_SIZE; i++) {
             if (!INPUT_SLOT_INDEX.containsKey(i)) {
@@ -303,12 +321,41 @@ public class FumoCraftGui {
                         .decoration(TextDecoration.ITALIC, false))
         ));
 
+        inventory.setItem(DERIVATIVE_NOTICE_SLOT, createDerivativeNoticeButton(derivativeNoticeEnabled));
+
         inventory.setItem(CANCEL_SLOT, createButton(
                 Material.RED_CONCRETE,
                 Component.text("取消制作", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false),
                 List.of(Component.text("关闭界面并退还槽内物品", NamedTextColor.GRAY)
                         .decoration(TextDecoration.ITALIC, false))
         ));
+    }
+
+    private static ItemStack createDerivativeNoticeButton(boolean enabled) {
+        if (enabled) {
+            return createButton(
+                    Material.LIME_DYE,
+                    Component.text("二创声明: 开启", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false),
+                    List.of(
+                            Component.text("点击关闭二创声明", NamedTextColor.GRAY)
+                                    .decoration(TextDecoration.ITALIC, false),
+                            Component.text("底部将附带:", NamedTextColor.DARK_GRAY)
+                                    .decoration(TextDecoration.ITALIC, false),
+                            Component.text(FumoItemCodec.DERIVATIVE_NOTICE_TEXT, NamedTextColor.GRAY)
+                                    .decoration(TextDecoration.ITALIC, true)
+                    )
+            );
+        }
+        return createButton(
+                Material.GRAY_DYE,
+                Component.text("二创声明: 关闭", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                List.of(
+                        Component.text("点击开启二创声明", NamedTextColor.GRAY)
+                                .decoration(TextDecoration.ITALIC, false),
+                        Component.text("当前不在物品底部写入二创声明", NamedTextColor.DARK_GRAY)
+                                .decoration(TextDecoration.ITALIC, false)
+                )
+        );
     }
 
     private static ItemStack createSlotGuide(Material material, String title, String hint) {
@@ -337,6 +384,7 @@ public class FumoCraftGui {
         private final UUID playerId;
         private final Component targetDisplayName;
         private Inventory inventory;
+        private boolean derivativeNoticeEnabled = true;
         private boolean completed;
 
         private GuiHolder(UUID playerId, Component targetDisplayName) {
@@ -358,6 +406,14 @@ public class FumoCraftGui {
 
         private Inventory inventory() {
             return inventory;
+        }
+
+        private boolean derivativeNoticeEnabled() {
+            return derivativeNoticeEnabled;
+        }
+
+        private void toggleDerivativeNotice() {
+            this.derivativeNoticeEnabled = !this.derivativeNoticeEnabled;
         }
 
         private boolean completed() {

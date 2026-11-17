@@ -79,12 +79,14 @@ public class FumoEntityListener {
         Location spawnLocation = computeSpawnLocation(targetBlock, player);
         ItemStack[] slots = codec.decodeEquipment(item);
         Component itemDisplayName = codec.extractItemDisplayName(item);
+        boolean includeDerivativeNotice = codec.hasDerivativeNotice(item);
 
         ArmorStand trackerStand = spawnTrackerEntity(spawnLocation);
         ArmorStand fumoStand = spawnFumoEntity(
                 spawnLocation.clone().add(0.0, FumoTrackerManager.TRACK_OFFSET_Y, 0.0),
                 slots,
-                itemDisplayName
+                itemDisplayName,
+                includeDerivativeNotice
         );
         trackerManager.startTracking(fumoStand, trackerStand, spawnLocation);
         consumeOneIfNeeded(player, hand);
@@ -151,7 +153,12 @@ public class FumoEntityListener {
         }
     }
 
-    private ArmorStand spawnFumoEntity(Location location, ItemStack[] slots, Component itemDisplayName) {
+    private ArmorStand spawnFumoEntity(
+            Location location,
+            ItemStack[] slots,
+            Component itemDisplayName,
+            boolean includeDerivativeNotice
+    ) {
         return location.getWorld().spawn(location, ArmorStand.class, stand -> {
             stand.setSmall(true);
             stand.setArms(true);
@@ -175,7 +182,7 @@ public class FumoEntityListener {
             }
             lockAllEquipmentSlots(stand);
 
-            codec.markEntity(stand, itemDisplayName);
+            codec.markEntity(stand, itemDisplayName, includeDerivativeNotice);
         });
     }
 

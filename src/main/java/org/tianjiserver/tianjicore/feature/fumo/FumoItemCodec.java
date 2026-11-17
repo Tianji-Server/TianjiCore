@@ -39,6 +39,11 @@ public class FumoItemCodec {
             EquipmentSlot.OFF_HAND
     );
 
+    /**
+     * 东方 Project 二次创作声明文本。
+     */
+    public static final String DERIVATIVE_NOTICE_TEXT = "非官方《东方Project》(上海アリス幻樂団) 二创";
+
     private static final MiniMessage MINI = MiniMessage.miniMessage();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
 
@@ -47,6 +52,7 @@ public class FumoItemCodec {
     private final NamespacedKey markerKey;
     private final NamespacedKey trackerMarkerKey;
     private final NamespacedKey entityItemNameKey;
+    private final NamespacedKey derivativeNoticeKey;
 
     public FumoItemCodec(Plugin plugin) {
         this.plugin = plugin;
@@ -54,6 +60,7 @@ public class FumoItemCodec {
         this.markerKey = new NamespacedKey(plugin, "fumo_marker");
         this.trackerMarkerKey = new NamespacedKey(plugin, "fumo_tracker_marker");
         this.entityItemNameKey = new NamespacedKey(plugin, "fumo_item_name");
+        this.derivativeNoticeKey = new NamespacedKey(plugin, "fumo_derivative_notice");
     }
 
     /**
@@ -100,9 +107,16 @@ public class FumoItemCodec {
     }
 
     /**
-     * 创建包含 6 槽装备快照与显示名称的 Fumo 物品。
+     * 创建包含 6 槽装备快照与显示名称的玩偶物品（默认不附带二创声明）。
      */
     public ItemStack createFumoItem(ItemStack[] slots, Component displayName) {
+        return createFumoItem(slots, displayName, false);
+    }
+
+    /**
+     * 创建包含 6 槽装备快照、显示名称及可选二创声明的玩偶物品。
+     */
+    public ItemStack createFumoItem(ItemStack[] slots, Component displayName, boolean includeDerivativeNotice) {
         ItemStack[] normalized = normalizeSlots(slots);
         ItemStack item = new ItemStack(Material.ARMOR_STAND);
         ItemMeta meta = item.getItemMeta();
@@ -114,10 +128,27 @@ public class FumoItemCodec {
         meta.displayName(finalName.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
 
         byte[] encoded = ItemStack.serializeItemsAsBytes(normalized);
-        meta.getPersistentDataContainer().set(equipmentKey, PersistentDataType.BYTE_ARRAY, encoded);
-        meta.lore(buildLore());
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        pdc.set(equipmentKey, PersistentDataType.BYTE_ARRAY, encoded);
+        if (includeDerivativeNotice) {
+            pdc.set(derivativeNoticeKey, PersistentDataType.BYTE, (byte) 1);
+        } else {
+            pdc.remove(derivativeNoticeKey);
+        }
+        meta.lore(buildLore(includeDerivativeNotice));
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * 判断给定玩偶物品是否带有二创声明标记。
+     */
+    public boolean hasDerivativeNotice(ItemStack item) {
+        if (!isFumoItem(item)) {
+            return false;
+        }
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && hasDerivativeNotice(meta.getPersistentDataContainer());
     }
 
     /**
@@ -160,13 +191,25 @@ public class FumoItemCodec {
     }
 
     /**
-     * 标记已放置的 Fumo 盔甲架，仅在实体 PDC 隐式保留物品名称以便回收还原（不显示在实体头顶）。
+     * 标记已放置的玩偶盔甲架，仅在实体 PDC 隐式保留物品名称以便回收还原（不显示在实体头顶）。
      */
     public void markEntity(ArmorStand stand, Component itemDisplayName) {
+        markEntity(stand, itemDisplayName, false);
+    }
+
+    /**
+     * 标记已放置的玩偶盔甲架，并保留物品名称及是否附带二创声明的状态以便回收还原。
+     */
+    public void markEntity(ArmorStand stand, Component itemDisplayName, boolean includeDerivativeNotice) {
         PersistentDataContainer pdc = stand.getPersistentDataContainer();
         pdc.set(markerKey, PersistentDataType.BYTE, (byte) 1);
         if (itemDisplayName != null) {
             pdc.set(entityItemNameKey, PersistentDataType.STRING, GSON.serialize(itemDisplayName));
+        }
+        if (includeDerivativeNotice) {
+            pdc.set(derivativeNoticeKey, PersistentDataType.BYTE, (byte) 1);
+        } else {
+            pdc.remove(derivativeNoticeKey);
         }
     }
 
@@ -178,7 +221,7 @@ public class FumoItemCodec {
     }
 
     /**
-     * 从已放置的 Fumo 盔甲架读取当前装备与隐式物品名称，重新编码为 Fumo 物品。
+     * 从已放置的玩偶盔甲架读取当前装备、隐式物品名称与二创声明状态，重新编码为玩偶物品。
      */
     public ItemStack extractFumoItem(ArmorStand stand) {
         ItemStack[] slots = new ItemStack[FUMO_SLOTS.size()];
@@ -189,7 +232,13 @@ public class FumoItemCodec {
         }
 
         Component displayName = resolveEntityItemName(stand);
-        return createFumoItem(slots, displayName);
+        boolean includeDerivativeNotice = hasDerivativeNotice(stand.getPersistentDataContainer());
+        return createFumoItem(slots, displayName, includeDerivativeNotice);
+    }
+
+    private boolean hasDerivativeNotice(PersistentDataContainer pdc) {
+        Byte value = pdc.get(derivativeNoticeKey, PersistentDataType.BYTE);
+        return value != null && value == (byte) 1;
     }
 
     private Component resolveEntityItemName(ArmorStand stand) {
@@ -217,15 +266,20 @@ public class FumoItemCodec {
         return normalized;
     }
 
-    private static List<Component> buildLore() {
-        return List.of(
+    private static List<Component> buildLore(boolean includeDerivativeNotice) {
+        List<Component> lines = new java.util.ArrayList<>(List.of(
                 loreLine("玩偶摆件", NamedTextColor.GRAY),
                 loreLine("────────────", NamedTextColor.DARK_GRAY),
                 loreLine("拆除方法", NamedTextColor.YELLOW),
                 loreLine("• ", NamedTextColor.DARK_GRAY)
                         .append(loreLine("潜行 + 左键", NamedTextColor.WHITE))
                         .append(loreLine(" 点击玩偶即可回收", NamedTextColor.GRAY))
-        );
+        ));
+        if (includeDerivativeNotice) {
+            lines.add(Component.text(DERIVATIVE_NOTICE_TEXT, NamedTextColor.GRAY)
+                    .decoration(TextDecoration.ITALIC, true));
+        }
+        return List.copyOf(lines);
     }
 
     private static Component loreLine(String text, NamedTextColor color) {

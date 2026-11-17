@@ -79,6 +79,8 @@
   - 模块处于关闭状态时无法打开制作台，命令会提示先执行 `/tc toggle fumo` 开启。
 - **6 个装备输入槽**（GUI 格位 `9, 10, 11, 12, 14, 15`）依次对应：
   - 头部（`HEAD`）、胸甲（`CHEST`）、护腿（`LEGS`）、靴子（`FEET`）、主手（`HAND`）、副手（`OFF_HAND`）。
+- **二创声明开关**（GUI 格位 `25`，默认开启）：
+  - 点击可切换是否在成品玩偶物品 Lore 最底部附加斜体声明 `非官方《东方Project》(上海アリス幻樂団) 二创`。
 - **防嵌套与防误操作**：
   - 禁止放入收纳袋（`BUNDLE`）、潜影盒（`*SHULKER_BOX`）、带有 `Container` 方块状态的物品（`BlockStateMeta`）以及已制作好的玩偶本身。
   - 禁止在 GUI 打开时通过 Shift 点击或双击收集物品到鼠标等方式越过输入槽校验。
@@ -89,7 +91,7 @@
 
 - 生成的玩偶物品材质为 `Material.ARMOR_STAND`：
   - 6 槽装备通过 `ItemStack.serializeItemsAsBytes` 序列化后写入物品 PDC（`fumo_equipment`）。
-  - 物品 Lore 展示 `玩偶摆件` 标识与潜行左键拆除回收方法。
+  - 物品 Lore 展示 `玩偶摆件` 标识与潜行左键拆除回收方法；若开启了二创声明开关，会在底部附加斜体声明，并将状态同步写入物品与实体 PDC（`fumo_derivative_notice`），确保放置回收后仍保留。
   - 物品名称仅显示在物品栏中，放置到世界后**不显示头顶悬浮名**（`customName(null)`、`setCustomNameVisible(false)`），而是将原始显示名称以 Gson 形式隐式保存在实体 PDC（`fumo_item_name`），以便回收时完整还原。
   - 插件不写入任何外部文件或数据库，也不记录制作者、放置者或归属权。
 
