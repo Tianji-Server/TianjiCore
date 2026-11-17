@@ -25,10 +25,10 @@ public record FumoPose(
     public static final FumoPose DEFAULT = new FumoPose(
             degreesToEulerAngle(0.0, 0.0, 0.0),
             degreesToEulerAngle(0.0, 0.0, 0.0),
-            degreesToEulerAngle(-30.0, 15.0, -10.0),
-            degreesToEulerAngle(-30.0, -15.0, 10.0),
-            degreesToEulerAngle(-85.0, -15.0, 0.0),
-            degreesToEulerAngle(-85.0, 15.0, 0.0)
+            degreesToEulerAngle(-30.0, 0.0, -15.0),
+            degreesToEulerAngle(-30.0, 0.0, 15.0),
+            degreesToEulerAngle(-85.0, -45.0, 0.0),
+            degreesToEulerAngle(-85.0, 45.0, 0.0)
     );
 
     /**

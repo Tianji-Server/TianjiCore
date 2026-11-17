@@ -6,6 +6,9 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.util.EulerAngle;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -86,5 +89,21 @@ class FumoConfigAndPoseTest {
         assertEquals(Math.PI, angle.getX(), 1e-6);
         assertEquals(-Math.PI / 2.0, angle.getY(), 1e-6);
         assertEquals(Math.PI / 4.0, angle.getZ(), 1e-6);
+    }
+
+    @Test
+    void defaultPoseSpreadsArmsOutward15DegreesAndLegs90DegreesApart() throws Exception {
+        assertEquals(FumoPose.degreesToEulerAngle(-30.0, 0.0, -15.0), FumoPose.DEFAULT.leftArm());
+        assertEquals(FumoPose.degreesToEulerAngle(-30.0, 0.0, 15.0), FumoPose.DEFAULT.rightArm());
+        assertEquals(FumoPose.degreesToEulerAngle(-85.0, -45.0, 0.0), FumoPose.DEFAULT.leftLeg());
+        assertEquals(FumoPose.degreesToEulerAngle(-85.0, 45.0, 0.0), FumoPose.DEFAULT.rightLeg());
+
+        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("config.yml")) {
+            assertNotNull(stream);
+            YamlConfiguration yaml = YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(stream, StandardCharsets.UTF_8)
+            );
+            assertEquals(FumoPose.DEFAULT, FumoPose.fromConfig(yaml.getConfigurationSection("fumo.pose")));
+        }
     }
 }

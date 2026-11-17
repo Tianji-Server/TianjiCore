@@ -19,10 +19,10 @@ fumo:
   pose:
     head: [0.0, 0.0, 0.0]
     body: [0.0, 0.0, 0.0]
-    left-arm: [-30.0, 15.0, -10.0]
-    right-arm: [-30.0, -15.0, 10.0]
-    left-leg: [-85.0, -15.0, 0.0]
-    right-leg: [-85.0, 15.0, 0.0]
+    left-arm: [-30.0, 0.0, -15.0]
+    right-arm: [-30.0, 0.0, 15.0]
+    left-leg: [-85.0, -45.0, 0.0]
+    right-leg: [-85.0, 45.0, 0.0]
   attributes:
     small: true
     arms: true
