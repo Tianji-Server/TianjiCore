@@ -82,12 +82,24 @@ public class FumoEntityListener {
         boolean includeDerivativeNotice = codec.hasDerivativeNotice(item);
 
         ArmorStand trackerStand = spawnTrackerEntity(spawnLocation);
+        if (!isValidSpawn(trackerStand)) {
+            player.sendMessage(Component.text("该位置无法放置玩偶！", NamedTextColor.RED));
+            return;
+        }
+
         ArmorStand fumoStand = spawnFumoEntity(
                 spawnLocation.clone().add(0.0, FumoTrackerManager.TRACK_OFFSET_Y, 0.0),
                 slots,
                 itemDisplayName,
                 includeDerivativeNotice
         );
+        if (!isValidSpawn(fumoStand) || !isValidSpawn(trackerStand)) {
+            removeIfValid(fumoStand);
+            removeIfValid(trackerStand);
+            player.sendMessage(Component.text("该位置无法放置玩偶！", NamedTextColor.RED));
+            return;
+        }
+
         trackerManager.startTracking(fumoStand, trackerStand, spawnLocation);
         consumeOneIfNeeded(player, hand);
     }
@@ -286,6 +298,16 @@ public class FumoEntityListener {
         } else {
             current.setAmount(current.getAmount() - 1);
             player.getInventory().setItem(hand, current);
+        }
+    }
+
+    private static boolean isValidSpawn(Entity entity) {
+        return entity != null && entity.isValid();
+    }
+
+    private static void removeIfValid(Entity entity) {
+        if (isValidSpawn(entity)) {
+            entity.remove();
         }
     }
 }
