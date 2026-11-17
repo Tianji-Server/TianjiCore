@@ -1,6 +1,8 @@
 package org.tianjiserver.tianjicore;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.tianjiserver.tianjicore.feature.fumo.FumoCommand;
+import org.tianjiserver.tianjicore.feature.fumo.FumoModule;
 import revxrsal.commands.bukkit.BukkitLamp;
 
 /**
@@ -26,6 +28,7 @@ public class TianjiCore extends JavaPlugin {
 
         var lamp = BukkitLamp.builder(this).build();
         lamp.register(commandHandler);
+        lamp.register(new FumoCommand(() -> commandHandler.getActiveModule("fumo", FumoModule.class)));
 
         getLogger().info("TianjiCore 已启动");
     }

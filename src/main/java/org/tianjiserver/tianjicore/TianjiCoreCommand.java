@@ -4,9 +4,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.CommandSender;
+import org.bukkit.event.Listener;
 import revxrsal.commands.annotation.Command;
 import revxrsal.commands.annotation.Subcommand;
 import revxrsal.commands.bukkit.annotation.CommandPermission;
+
+import java.util.Optional;
 
 
 /**
@@ -35,6 +38,13 @@ public class TianjiCoreCommand {
      */
     public void shutdown() {
         moduleHelper.shutdown();
+    }
+
+    /**
+     * 获取当前已开启的指定模块实例。
+     */
+    public <T extends Listener> Optional<T> getActiveModule(String moduleKey, Class<T> moduleType) {
+        return moduleHelper.getActiveModule(moduleKey, moduleType);
     }
 
     /**

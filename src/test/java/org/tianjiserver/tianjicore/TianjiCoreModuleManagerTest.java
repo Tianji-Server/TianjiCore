@@ -38,12 +38,13 @@ class TianjiCoreModuleManagerTest {
         pluginManager = mock(PluginManager.class);
         config = new YamlConfiguration();
         for (String key : List.of("firstjoinmessage", "recipebugfix", "phantomspawnblocker",
-                "endermanmushroombugfix")) {
+                "endermanmushroombugfix", "fumo")) {
             config.set("modules." + key + ".enabled", false);
         }
         when(plugin.getConfig()).thenReturn(config);
         when(plugin.getDataFolder()).thenReturn(dataFolder.toFile());
         when(plugin.getLogger()).thenReturn(mock(Logger.class));
+        when(plugin.namespace()).thenReturn("tianjicore");
         when(plugin.getServer()).thenReturn(server);
         when(server.getPluginManager()).thenReturn(pluginManager);
         manager = new TianjiCoreModuleManager(plugin);
@@ -56,7 +57,7 @@ class TianjiCoreModuleManagerTest {
         var result = manager.reload("ALL");
         assertEquals(SUCCESS_PLUGIN, result.status());
         assertTrue(result.failures().isEmpty());
-        assertEquals(List.of(false, false, true, false), states());
+        assertEquals(List.of(false, false, true, false, false), states());
     }
 
     @Test
@@ -74,7 +75,7 @@ class TianjiCoreModuleManagerTest {
                 result.failures().stream().map(TianjiCoreModuleManager.ReloadFailure::target).toList());
         assertTrue(result.failures().get(0).reason().contains("first failure"));
         assertTrue(result.failures().get(1).reason().contains("second failure"));
-        assertEquals(List.of(false, false, false, true), states());
+        assertEquals(List.of(false, false, false, true, false), states());
         verify(pluginManager, times(3)).registerEvents(any(Listener.class), eq(plugin));
     }
 
@@ -112,7 +113,7 @@ class TianjiCoreModuleManagerTest {
         assertEquals(SUCCESS_MODULE, result.status());
         assertFalse(result.moduleInfo().enabled());
         assertTrue(result.failures().isEmpty());
-        assertEquals(List.of(false, false, false, false), states());
+        assertEquals(List.of(false, false, false, false, false), states());
     }
 
     @Test
@@ -120,7 +121,7 @@ class TianjiCoreModuleManagerTest {
         enable("phantomspawnblocker");
         enable("endermanmushroombugfix");
         manager.reload("phantom");
-        assertEquals(List.of(false, false, true, false), states());
+        assertEquals(List.of(false, false, true, false, false), states());
     }
 
     @Test
@@ -134,7 +135,7 @@ class TianjiCoreModuleManagerTest {
         assertEquals(FAILED, result.status());
         assertEquals("config.yml", result.failures().getFirst().target());
         assertTrue(result.failures().getFirst().reason().contains("InvalidConfigurationException"));
-        assertEquals(List.of(false, false, true, false), states());
+        assertEquals(List.of(false, false, true, false, false), states());
         verify(plugin, never()).reloadConfig();
     }
 
@@ -179,7 +180,22 @@ class TianjiCoreModuleManagerTest {
 
         assertEquals(List.of("模块运行状态:", "首次进服消息 (firstjoinmessage): 关闭",
                 "配方修复 (recipebugfix): 关闭", "阻止幻翼生成 (phantomspawnblocker): 开启",
-                "禁止末影人搬动方块 (endermanmushroombugfix): 关闭"), messages(sender, 5));
+                "禁止末影人搬动方块 (endermanmushroombugfix): 关闭", "玩偶 (fumo): 关闭"), messages(sender, 6));
+    }
+
+    @Test
+    void fumoModuleSupportsToggleByAliasAndExposesActiveInstance() {
+        assertTrue(manager.getActiveModule("fumo", org.tianjiserver.tianjicore.feature.fumo.FumoModule.class).isEmpty());
+
+        var enabled = manager.toggle("doll");
+        assertEquals(TianjiCoreModuleManager.ToggleStatus.SUCCESS, enabled.status());
+        assertTrue(enabled.moduleInfo().enabled());
+        assertTrue(manager.getActiveModule("fumo", org.tianjiserver.tianjicore.feature.fumo.FumoModule.class).isPresent());
+
+        var disabled = manager.toggle("fumo");
+        assertEquals(TianjiCoreModuleManager.ToggleStatus.SUCCESS, disabled.status());
+        assertFalse(disabled.moduleInfo().enabled());
+        assertTrue(manager.getActiveModule("fumo", org.tianjiserver.tianjicore.feature.fumo.FumoModule.class).isEmpty());
     }
 
     private void enable(String key) {

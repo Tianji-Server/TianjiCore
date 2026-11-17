@@ -1,6 +1,9 @@
 package org.tianjiserver.tianjicore;
 
+import org.bukkit.event.Listener;
+
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 模块管理辅助类。
@@ -65,6 +68,13 @@ class TianjiCoreModuleHelper {
      */
     String getReloadPluginTarget() {
         return moduleManager.getReloadPluginTarget();
+    }
+
+    /**
+     * 获取当前已开启的指定模块实例。
+     */
+    <T extends Listener> Optional<T> getActiveModule(String moduleKey, Class<T> moduleType) {
+        return moduleManager.getActiveModule(moduleKey, moduleType);
     }
 
 }

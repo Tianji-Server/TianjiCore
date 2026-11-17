@@ -5,6 +5,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.tianjiserver.tianjicore.feature.FirstJoinMessage;
 import org.tianjiserver.tianjicore.feature.PhantomSpawnBlocker;
+import org.tianjiserver.tianjicore.feature.fumo.FumoModule;
 import org.tianjiserver.tianjicore.fixer.EndermanBlockMoveBlocker;
 import org.tianjiserver.tianjicore.fixer.RecipeBugFix;
 
@@ -14,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -75,6 +77,15 @@ class TianjiCoreModuleManager {
                 "enderman",
                 "endermanblockmoveblocker",
                 "mushroomfix"
+        );
+        registerModule(
+                "fumo",
+                "玩偶",
+                true,
+                () -> new FumoModule(plugin),
+                "doll",
+                "plush",
+                "plushie"
         );
 
         plugin.getConfig().options().copyDefaults(true);
@@ -193,6 +204,17 @@ class TianjiCoreModuleManager {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 获取当前处于运行状态的指定模块实例。
+     */
+    <T extends Listener> Optional<T> getActiveModule(String rawKey, Class<T> moduleType) {
+        ModuleState module = findModule(rawKey);
+        if (module == null || !module.enabled || !moduleType.isInstance(module.listenerInstance)) {
+            return Optional.empty();
+        }
+        return Optional.of(moduleType.cast(module.listenerInstance));
+    }
+
     private List<ReloadFailure> applyConfigStates(boolean forceRestartEnabledModule) {
         List<ReloadFailure> failures = new ArrayList<>();
         for (ModuleState module : modules.values()) {
@@ -260,6 +282,13 @@ class TianjiCoreModuleManager {
     }
 
     private void stopModuleIfRunning(ModuleState module) {
+        if (module.listenerInstance instanceof LifecycleModule lifecycleModule) {
+            try {
+                lifecycleModule.shutdown();
+            } catch (Exception exception) {
+                plugin.getLogger().log(Level.SEVERE, "模块清理失败: " + module.key, exception);
+            }
+        }
         if (module.listenerInstance != null) {
             // 注销监听器，确保模块关闭后不再响应事件。
             HandlerList.unregisterAll(module.listenerInstance);
