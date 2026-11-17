@@ -278,6 +278,13 @@ public class FumoItemCodec {
         List<Component> lines = new java.util.ArrayList<>(List.of(
                 loreLine("玩偶摆件", NamedTextColor.GRAY),
                 loreLine(LORE_DIVIDER, NamedTextColor.DARK_GRAY),
+                loreLine("放置方法", NamedTextColor.YELLOW),
+                loreLine("• ", NamedTextColor.DARK_GRAY)
+                        .append(loreLine("右键", NamedTextColor.WHITE))
+                        .append(loreLine(" 点击方块即可放置", NamedTextColor.GRAY)),
+                loreLine("• ", NamedTextColor.DARK_GRAY)
+                        .append(loreLine("潜行 + 右键", NamedTextColor.WHITE))
+                        .append(loreLine(" 对齐 45° 朝向放置", NamedTextColor.GRAY)),
                 loreLine("拆除方法", NamedTextColor.YELLOW),
                 loreLine("• ", NamedTextColor.DARK_GRAY)
                         .append(loreLine("潜行 + 左键", NamedTextColor.WHITE))
