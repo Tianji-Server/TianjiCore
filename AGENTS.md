@@ -6,8 +6,8 @@
 
 每次完成代码或配置修改后，必须按顺序执行以下交付步骤：
 
-1. **编译插件与运行测试**：
-   - 执行 `mvn clean package`，确保项目编译通过、全部单元测试通过，并产出最新的插件 Jar：
+1. **编译打包插件**：
+   - 执行 `mvn clean package`，确保项目编译打包通过，并产出最新的插件 Jar：
      - Paper 插件：`target/TianjiCore-<version>.jar`
 2. **提交 Git 变更**：
    - 构建验证通过后，主动将相关修改通过 `git add` 与 `git commit` 提交到本地仓库。
