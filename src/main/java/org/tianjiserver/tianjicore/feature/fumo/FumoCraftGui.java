@@ -672,15 +672,17 @@ public class FumoCraftGui {
 
     private ItemStack createDerivativeNoticeButton(boolean enabled) {
         if (enabled) {
+            List<Component> lore = new java.util.ArrayList<>();
+            lore.add(nonItalic("点击切换为关闭", NamedTextColor.YELLOW));
+            lore.add(nonItalic("物品底部将附带:", NamedTextColor.DARK_GRAY));
+            for (String line : FumoItemCodec.DERIVATIVE_NOTICE_LINES) {
+                lore.add(Component.text(line, NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, true));
+            }
             return createButton(
                     Material.LIME_DYE,
                     nonItalic("二创声明: 开启", NamedTextColor.GREEN),
-                    List.of(
-                            nonItalic("点击切换为关闭", NamedTextColor.YELLOW),
-                            nonItalic("物品底部将附带:", NamedTextColor.DARK_GRAY),
-                            Component.text(FumoItemCodec.DERIVATIVE_NOTICE_TEXT, NamedTextColor.GRAY)
-                                    .decoration(TextDecoration.ITALIC, true)
-                    ),
+                    lore,
                     true
             );
         }

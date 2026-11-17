@@ -40,9 +40,12 @@ public class FumoItemCodec {
     );
 
     /**
-     * 东方 Project 二次创作声明文本。
+     * 东方 Project 二次创作声明文本（按两行展示，避免物品说明过宽）。
      */
-    public static final String DERIVATIVE_NOTICE_TEXT = "非官方《东方Project》(上海アリス幻樂団) 二创";
+    public static final List<String> DERIVATIVE_NOTICE_LINES = List.of(
+            "非官方《东方Project》",
+            "(上海アリス幻樂団) 二创"
+    );
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
@@ -276,8 +279,10 @@ public class FumoItemCodec {
                         .append(loreLine(" 点击玩偶即可回收", NamedTextColor.GRAY))
         ));
         if (includeDerivativeNotice) {
-            lines.add(Component.text(DERIVATIVE_NOTICE_TEXT, NamedTextColor.GRAY)
-                    .decoration(TextDecoration.ITALIC, true));
+            for (String line : DERIVATIVE_NOTICE_LINES) {
+                lines.add(Component.text(line, NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, true));
+            }
         }
         return List.copyOf(lines);
     }
