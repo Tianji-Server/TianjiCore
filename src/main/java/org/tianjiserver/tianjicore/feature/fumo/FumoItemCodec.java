@@ -13,7 +13,6 @@ import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.components.CustomModelDataComponent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
@@ -101,7 +100,7 @@ public class FumoItemCodec {
     /**
      * 创建包含 6 槽装备快照与显示名称的 Fumo 物品。
      */
-    public ItemStack createFumoItem(ItemStack[] slots, Component displayName, FumoConfig config) {
+    public ItemStack createFumoItem(ItemStack[] slots, Component displayName) {
         ItemStack[] normalized = normalizeSlots(slots);
         ItemStack item = new ItemStack(Material.ARMOR_STAND);
         ItemMeta meta = item.getItemMeta();
@@ -111,11 +110,6 @@ public class FumoItemCodec {
 
         Component finalName = displayName != null ? displayName : resolveDisplayName(null);
         meta.displayName(finalName.decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
-        if (config != null && config.customModelData() > 0) {
-            CustomModelDataComponent customModelData = meta.getCustomModelDataComponent();
-            customModelData.setFloats(List.of((float) config.customModelData()));
-            meta.setCustomModelDataComponent(customModelData);
-        }
 
         byte[] encoded = ItemStack.serializeItemsAsBytes(normalized);
         meta.getPersistentDataContainer().set(equipmentKey, PersistentDataType.BYTE_ARRAY, encoded);
@@ -177,7 +171,7 @@ public class FumoItemCodec {
     /**
      * 从已放置的 Fumo 盔甲架读取当前装备与隐式物品名称，重新编码为 Fumo 物品。
      */
-    public ItemStack extractFumoItem(ArmorStand stand, FumoConfig config) {
+    public ItemStack extractFumoItem(ArmorStand stand) {
         ItemStack[] slots = new ItemStack[FUMO_SLOTS.size()];
         EntityEquipment equipment = stand.getEquipment();
         for (int i = 0; i < FUMO_SLOTS.size(); i++) {
@@ -186,7 +180,7 @@ public class FumoItemCodec {
         }
 
         Component displayName = resolveEntityItemName(stand);
-        return createFumoItem(slots, displayName, config);
+        return createFumoItem(slots, displayName);
     }
 
     private Component resolveEntityItemName(ArmorStand stand) {

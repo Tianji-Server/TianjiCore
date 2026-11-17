@@ -6,12 +6,10 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -27,11 +25,11 @@ import java.util.Map;
  */
 public class FumoEntityListener {
 
-    private final FumoConfig config;
+    private final FumoPose pose;
     private final FumoItemCodec codec;
 
-    public FumoEntityListener(FumoConfig config, FumoItemCodec codec) {
-        this.config = config;
+    public FumoEntityListener(FumoPose pose, FumoItemCodec codec) {
+        this.pose = pose;
         this.codec = codec;
     }
 
@@ -63,14 +61,6 @@ public class FumoEntityListener {
             return;
         }
 
-        if (exceedsChunkLimit(targetBlock)) {
-            event.getPlayer().sendMessage(Component.text(
-                    "当前区块的玩偶数量已达上限 (" + config.maxPerChunk() + ")。",
-                    NamedTextColor.RED
-            ));
-            return;
-        }
-
         Player player = event.getPlayer();
         Location spawnLocation = computeSpawnLocation(targetBlock, player);
         ItemStack[] slots = codec.decodeEquipment(item);
@@ -87,7 +77,7 @@ public class FumoEntityListener {
     }
 
     public void onInteractAtEntity(PlayerInteractAtEntityEvent event) {
-        if (!config.sneakRightClickPickup() || event.getHand() != EquipmentSlot.HAND) {
+        if (event.getHand() != EquipmentSlot.HAND) {
             return;
         }
         if (!(event.getRightClicked() instanceof ArmorStand stand) || !codec.isFumoEntity(stand)) {
@@ -114,31 +104,22 @@ public class FumoEntityListener {
             return;
         }
 
-        if (isExplosion(event.getCause())) {
-            if (config.preventExplosionDamage()) {
-                event.setCancelled(true);
-            }
-            return;
-        }
-
-        if (config.preventEnvironmentalDamage()) {
-            event.setCancelled(true);
-        }
+        event.setCancelled(true);
     }
 
     private void spawnFumoEntity(Location location, ItemStack[] slots, Component itemDisplayName) {
         location.getWorld().spawn(location, ArmorStand.class, stand -> {
-            stand.setSmall(config.small());
-            stand.setArms(config.arms());
-            stand.setBasePlate(config.basePlate());
-            stand.setGravity(config.gravity());
+            stand.setSmall(true);
+            stand.setArms(true);
+            stand.setBasePlate(false);
+            stand.setGravity(false);
             stand.setCanPickupItems(false);
             stand.setRemoveWhenFarAway(false);
             // 名称仅存在于物品上，世界中不展示悬浮字。
             stand.customName(null);
             stand.setCustomNameVisible(false);
 
-            config.pose().applyTo(stand);
+            pose.applyTo(stand);
 
             EntityEquipment equipment = stand.getEquipment();
             for (int i = 0; i < FumoItemCodec.FUMO_SLOTS.size(); i++) {
@@ -158,7 +139,7 @@ public class FumoEntityListener {
             return;
         }
 
-        ItemStack fumoItem = codec.extractFumoItem(stand, config);
+        ItemStack fumoItem = codec.extractFumoItem(stand);
         Location dropLocation = stand.getLocation();
         stand.remove();
 
@@ -166,23 +147,6 @@ public class FumoEntityListener {
         for (ItemStack extra : overflow.values()) {
             dropLocation.getWorld().dropItemNaturally(dropLocation, extra);
         }
-    }
-
-    private boolean exceedsChunkLimit(Block targetBlock) {
-        int limit = config.maxPerChunk();
-        if (limit <= 0) {
-            return false;
-        }
-        int count = 0;
-        for (Entity entity : targetBlock.getChunk().getEntities()) {
-            if (codec.isFumoEntity(entity)) {
-                count++;
-                if (count >= limit) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     private static Location computeSpawnLocation(Block targetBlock, Player player) {
@@ -218,9 +182,5 @@ public class FumoEntityListener {
             current.setAmount(current.getAmount() - 1);
             player.getInventory().setItem(hand, current);
         }
-    }
-
-    private static boolean isExplosion(DamageCause cause) {
-        return cause == DamageCause.BLOCK_EXPLOSION || cause == DamageCause.ENTITY_EXPLOSION;
     }
 }

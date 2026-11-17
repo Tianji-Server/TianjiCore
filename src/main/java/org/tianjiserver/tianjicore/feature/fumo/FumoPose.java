@@ -1,6 +1,7 @@
 package org.tianjiserver.tianjicore.feature.fumo;
 
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.util.EulerAngle;
 
@@ -30,6 +31,16 @@ public record FumoPose(
             degreesToEulerAngle(-85.0, -45.0, 0.0),
             degreesToEulerAngle(-85.0, 45.0, 0.0)
     );
+
+    /**
+     * 从插件配置加载 {@code fumo.pose}，缺失时自动回退至默认姿势。
+     */
+    public static FumoPose from(FileConfiguration config) {
+        if (config == null) {
+            return DEFAULT;
+        }
+        return fromConfig(config.getConfigurationSection("fumo.pose"));
+    }
 
     /**
      * 从配置节点解析六组固定姿势；缺失或格式非法时回退到默认值。

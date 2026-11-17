@@ -5,6 +5,7 @@ import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -28,7 +29,7 @@ class FumoEntityListenerTest {
     @BeforeEach
     void setUp() {
         codec = mock(FumoItemCodec.class);
-        listener = new FumoEntityListener(FumoConfig.DEFAULT, codec);
+        listener = new FumoEntityListener(FumoPose.DEFAULT, codec);
         stand = mock(ArmorStand.class);
         player = mock(Player.class);
         inventory = mock(PlayerInventory.class);
@@ -40,7 +41,7 @@ class FumoEntityListenerTest {
         when(codec.isFumoEntity(stand)).thenReturn(true);
         when(stand.isValid()).thenReturn(true);
         when(stand.getLocation()).thenReturn(location);
-        when(codec.extractFumoItem(stand, FumoConfig.DEFAULT)).thenReturn(fumoItem);
+        when(codec.extractFumoItem(stand)).thenReturn(fumoItem);
         when(player.getInventory()).thenReturn(inventory);
         when(inventory.addItem(fumoItem)).thenReturn(new HashMap<>());
     }
@@ -55,7 +56,7 @@ class FumoEntityListenerTest {
         listener.onEntityDamage(event);
 
         verify(event).setCancelled(true);
-        verify(codec, never()).extractFumoItem(any(), any());
+        verify(codec, never()).extractFumoItem(any());
         verify(stand, never()).remove();
         verify(inventory, never()).addItem(any(ItemStack.class));
     }
@@ -70,13 +71,13 @@ class FumoEntityListenerTest {
         listener.onEntityDamage(event);
 
         verify(event).setCancelled(true);
-        verify(codec).extractFumoItem(stand, FumoConfig.DEFAULT);
+        verify(codec).extractFumoItem(stand);
         verify(stand).remove();
         verify(inventory).addItem(fumoItem);
     }
 
     @Test
-    void sneakRightClickStillPicksUpWhenEnabled() {
+    void sneakRightClickStillPicksUp() {
         PlayerInteractAtEntityEvent event = mock(PlayerInteractAtEntityEvent.class);
         when(event.getHand()).thenReturn(EquipmentSlot.HAND);
         when(event.getRightClicked()).thenReturn(stand);
@@ -86,8 +87,19 @@ class FumoEntityListenerTest {
         listener.onInteractAtEntity(event);
 
         verify(event).setCancelled(true);
-        verify(codec).extractFumoItem(stand, FumoConfig.DEFAULT);
+        verify(codec).extractFumoItem(stand);
         verify(stand).remove();
         verify(inventory).addItem(fumoItem);
+    }
+
+    @Test
+    void nonPlayerDamageIsAlwaysCancelled() {
+        EntityDamageEvent event = mock(EntityDamageEvent.class);
+        when(event.getEntity()).thenReturn(stand);
+
+        listener.onEntityDamage(event);
+
+        verify(event).setCancelled(true);
+        verify(stand, never()).remove();
     }
 }

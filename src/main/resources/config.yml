@@ -23,20 +23,3 @@ fumo:
     right-arm: [-30.0, 0.0, 15.0]
     left-leg: [-85.0, -45.0, 0.0]
     right-leg: [-85.0, 45.0, 0.0]
-  attributes:
-    small: true
-    arms: true
-    base-plate: false
-    gravity: false
-    custom-model-data: 0
-  craft:
-    # 是否至少需要放入一件装备才可制作
-    require-at-least-one-item: true
-    # 额外禁止放入装备槽的材质（潜影盒、收纳袋与 Fumo 本身始终内置禁止）
-    blocked-materials: []
-  protection:
-    prevent-explosion-damage: true
-    prevent-environmental-damage: true
-    sneak-right-click-pickup: true
-  limits:
-    max-per-chunk: 16

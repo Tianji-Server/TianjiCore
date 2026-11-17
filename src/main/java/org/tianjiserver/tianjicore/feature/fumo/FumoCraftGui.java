@@ -46,12 +46,10 @@ public class FumoCraftGui {
             15, 5
     );
 
-    private final FumoConfig config;
     private final FumoItemCodec codec;
     private final Map<UUID, GuiHolder> activeSessions = new ConcurrentHashMap<>();
 
-    public FumoCraftGui(FumoConfig config, FumoItemCodec codec) {
-        this.config = config;
+    public FumoCraftGui(FumoItemCodec codec) {
         this.codec = codec;
     }
 
@@ -192,7 +190,7 @@ public class FumoCraftGui {
             hasAnyItem = true;
         }
 
-        if (config.requireAtLeastOneItem() && !hasAnyItem) {
+        if (!hasAnyItem) {
             player.sendMessage(Component.text("请至少放入一件自定义装备后再制作！", NamedTextColor.RED));
             return;
         }
@@ -202,7 +200,7 @@ public class FumoCraftGui {
             return;
         }
 
-        ItemStack fumoItem = codec.createFumoItem(slots, holder.targetDisplayName(), config);
+        ItemStack fumoItem = codec.createFumoItem(slots, holder.targetDisplayName());
         clearInputSlots(holder.inventory());
         holder.markCompleted();
         activeSessions.remove(player.getUniqueId(), holder);
@@ -231,7 +229,7 @@ public class FumoCraftGui {
         if (item == null || item.isEmpty()) {
             return true;
         }
-        if (config.isBlockedMaterial(item.getType()) || codec.isFumoItem(item)) {
+        if (isBlockedContainerMaterial(item.getType()) || codec.isFumoItem(item)) {
             return false;
         }
         if (item.hasItemMeta() && item.getItemMeta() instanceof BlockStateMeta blockStateMeta
@@ -240,6 +238,13 @@ public class FumoCraftGui {
             return false;
         }
         return true;
+    }
+
+    static boolean isBlockedContainerMaterial(Material material) {
+        if (material == null) {
+            return true;
+        }
+        return material == Material.BUNDLE || material.name().endsWith("SHULKER_BOX");
     }
 
     private static ItemStack resolveIncomingItem(InventoryClickEvent event, Player player) {

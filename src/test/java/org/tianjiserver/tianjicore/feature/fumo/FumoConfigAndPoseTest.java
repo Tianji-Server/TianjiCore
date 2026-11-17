@@ -51,36 +51,16 @@ class FumoConfigAndPoseTest {
     }
 
     @Test
-    void configReadsAllFumoSettingsAndBuiltInContainerBlocks() {
-        YamlConfiguration yaml = new YamlConfiguration();
-        yaml.set("fumo.attributes.small", false);
-        yaml.set("fumo.attributes.arms", false);
-        yaml.set("fumo.attributes.base-plate", true);
-        yaml.set("fumo.attributes.gravity", true);
-        yaml.set("fumo.attributes.custom-model-data", 1001);
-        yaml.set("fumo.craft.require-at-least-one-item", false);
-        yaml.set("fumo.craft.blocked-materials", List.of("bedrock", "UNKNOWN_ITEM"));
-        yaml.set("fumo.protection.prevent-explosion-damage", false);
-        yaml.set("fumo.protection.prevent-environmental-damage", false);
-        yaml.set("fumo.protection.sneak-right-click-pickup", false);
-        yaml.set("fumo.limits.max-per-chunk", 8);
+    void builtInContainerMaterialsAreBlockedAndPoseFallsBackWhenMissing() {
+        YamlConfiguration emptyYaml = new YamlConfiguration();
+        assertEquals(FumoPose.DEFAULT, FumoPose.from(emptyYaml));
+        assertEquals(FumoPose.DEFAULT, FumoPose.from(null));
 
-        FumoConfig config = FumoConfig.from(yaml);
-        assertFalse(config.small());
-        assertFalse(config.arms());
-        assertTrue(config.basePlate());
-        assertTrue(config.gravity());
-        assertEquals(1001, config.customModelData());
-        assertFalse(config.requireAtLeastOneItem());
-        assertTrue(config.isBlockedMaterial(Material.BEDROCK));
-        assertTrue(config.isBlockedMaterial(Material.SHULKER_BOX));
-        assertTrue(config.isBlockedMaterial(Material.RED_SHULKER_BOX));
-        assertTrue(config.isBlockedMaterial(Material.BUNDLE));
-        assertFalse(config.isBlockedMaterial(Material.DIAMOND_SWORD));
-        assertFalse(config.preventExplosionDamage());
-        assertFalse(config.preventEnvironmentalDamage());
-        assertFalse(config.sneakRightClickPickup());
-        assertEquals(8, config.maxPerChunk());
+        assertTrue(FumoCraftGui.isBlockedContainerMaterial(null));
+        assertTrue(FumoCraftGui.isBlockedContainerMaterial(Material.SHULKER_BOX));
+        assertTrue(FumoCraftGui.isBlockedContainerMaterial(Material.RED_SHULKER_BOX));
+        assertTrue(FumoCraftGui.isBlockedContainerMaterial(Material.BUNDLE));
+        assertFalse(FumoCraftGui.isBlockedContainerMaterial(Material.DIAMOND_SWORD));
     }
 
     @Test
