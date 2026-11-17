@@ -240,7 +240,7 @@ public class FumoCraftGui {
         return true;
     }
 
-    static boolean isBlockedContainerMaterial(Material material) {
+    private static boolean isBlockedContainerMaterial(Material material) {
         if (material == null) {
             return true;
         }
