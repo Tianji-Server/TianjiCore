@@ -89,7 +89,7 @@
 
 - 生成的 Fumo 物品材质为 `Material.ARMOR_STAND`：
   - 6 槽装备通过 `ItemStack.serializeItemsAsBytes` 序列化后写入物品 PDC（`fumo_equipment`）。
-  - 物品 Lore 自动列出已配置的各槽位物品名称与数量。
+  - 物品 Lore 展示 `FUMO玩偶摆件` 标识、FUMO 特性说明及潜行拆除回收方法。
   - 物品名称仅显示在物品栏中，放置到世界后**不显示头顶悬浮名**（`customName(null)`、`setCustomNameVisible(false)`），而是将原始显示名称以 Gson 形式隐式保存在实体 PDC（`fumo_item_name`），以便回收时完整还原。
   - 插件不写入任何外部文件或数据库，也不记录制作者、放置者或归属权。
 

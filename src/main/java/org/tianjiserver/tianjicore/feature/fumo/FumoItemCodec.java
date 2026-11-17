@@ -17,7 +17,6 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -38,15 +37,6 @@ public class FumoItemCodec {
             EquipmentSlot.FEET,
             EquipmentSlot.HAND,
             EquipmentSlot.OFF_HAND
-    );
-
-    private static final List<String> SLOT_LABELS = List.of(
-            "头部",
-            "胸甲",
-            "护腿",
-            "靴子",
-            "主手",
-            "副手"
     );
 
     private static final MiniMessage MINI = MiniMessage.miniMessage();
@@ -125,7 +115,7 @@ public class FumoItemCodec {
 
         byte[] encoded = ItemStack.serializeItemsAsBytes(normalized);
         meta.getPersistentDataContainer().set(equipmentKey, PersistentDataType.BYTE_ARRAY, encoded);
-        meta.lore(buildLore(normalized));
+        meta.lore(buildLore());
         item.setItemMeta(meta);
         return item;
     }
@@ -227,34 +217,30 @@ public class FumoItemCodec {
         return normalized;
     }
 
-    private static List<Component> buildLore(ItemStack[] slots) {
-        List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("固定姿势玩偶摆件", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false));
-        lore.add(Component.text("────────────", NamedTextColor.DARK_GRAY)
-                .decoration(TextDecoration.ITALIC, false));
+    private static List<Component> buildLore() {
+        return List.of(
+                loreLine("FUMO玩偶摆件", NamedTextColor.GRAY),
+                loreLine("────────────", NamedTextColor.DARK_GRAY),
+                loreLine("FUMO特性", NamedTextColor.AQUA),
+                loreBullet("右键方块放置，潜行放置对齐 45° 朝向"),
+                loreBullet("自动落至表面后固定，不受重力与移动影响"),
+                loreBullet("免疫伤害、击退与传送，锁定装备防误取"),
+                loreBullet("放置后不显示悬浮名称，自带轻微坐姿微调"),
+                Component.empty(),
+                loreLine("拆除方法", NamedTextColor.YELLOW),
+                loreLine("• ", NamedTextColor.DARK_GRAY)
+                        .append(loreLine("潜行 + 左键 / 右键", NamedTextColor.WHITE))
+                        .append(loreLine(" 点击玩偶即可回收", NamedTextColor.GRAY))
+        );
+    }
 
-        boolean hasAny = false;
-        for (int i = 0; i < FUMO_SLOTS.size(); i++) {
-            ItemStack piece = slots[i];
-            if (piece == null || piece.isEmpty()) {
-                continue;
-            }
-            hasAny = true;
-            Component line = Component.text(SLOT_LABELS.get(i) + ": ", NamedTextColor.GRAY)
-                    .append(piece.effectiveName().colorIfAbsent(NamedTextColor.WHITE))
-                    .decoration(TextDecoration.ITALIC, false);
-            if (piece.getAmount() > 1) {
-                line = line.append(Component.text(" x" + piece.getAmount(), NamedTextColor.DARK_GRAY)
-                        .decoration(TextDecoration.ITALIC, false));
-            }
-            lore.add(line);
-        }
+    private static Component loreBullet(String text) {
+        return loreLine("• ", NamedTextColor.DARK_GRAY)
+                .append(loreLine(text, NamedTextColor.GRAY));
+    }
 
-        if (!hasAny) {
-            lore.add(Component.text("无自定义装备", NamedTextColor.DARK_GRAY)
-                    .decoration(TextDecoration.ITALIC, false));
-        }
-        return lore;
+    private static Component loreLine(String text, NamedTextColor color) {
+        return Component.text(text, color)
+                .decoration(TextDecoration.ITALIC, false);
     }
 }
