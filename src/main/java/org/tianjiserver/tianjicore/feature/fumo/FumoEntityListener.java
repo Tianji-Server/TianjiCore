@@ -110,7 +110,7 @@ public class FumoEntityListener {
             stand.setSmall(true);
             stand.setArms(true);
             stand.setBasePlate(false);
-            stand.setGravity(false);
+            stand.setGravity(true);
             stand.setCanPickupItems(false);
             stand.setRemoveWhenFarAway(false);
             // 名称仅存在于物品上，世界中不展示悬浮字。
