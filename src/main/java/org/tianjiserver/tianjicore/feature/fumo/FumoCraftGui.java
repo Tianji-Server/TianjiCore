@@ -58,7 +58,7 @@ public class FumoCraftGui {
      */
     public void open(Player player, String rawName) {
         Component targetName = FumoItemCodec.resolveDisplayName(rawName);
-        Component title = Component.text("Fumo 玩偶制作台", NamedTextColor.GOLD)
+        Component title = Component.text("玩偶制作台", NamedTextColor.GOLD)
                 .decoration(TextDecoration.ITALIC, false);
 
         GuiHolder holder = new GuiHolder(player.getUniqueId(), targetName);
@@ -207,7 +207,7 @@ public class FumoCraftGui {
 
         giveOrDrop(player, fumoItem);
         player.closeInventory();
-        player.sendMessage(Component.text("已制作 Fumo 玩偶: ", NamedTextColor.GREEN)
+        player.sendMessage(Component.text("已制作玩偶: ", NamedTextColor.GREEN)
                 .append(holder.targetDisplayName()));
     }
 
@@ -298,7 +298,7 @@ public class FumoCraftGui {
 
         inventory.setItem(CONFIRM_SLOT, createButton(
                 Material.LIME_CONCRETE,
-                Component.text("确认制作 Fumo", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false),
+                Component.text("确认制作玩偶", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false),
                 List.of(Component.text("点击打包左侧 6 槽装备并生成玩偶物品", NamedTextColor.GRAY)
                         .decoration(TextDecoration.ITALIC, false))
         ));

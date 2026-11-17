@@ -9,12 +9,12 @@ commands:
     description: TianjiCore 管理命令
     usage: /tianjicore [help|status|toggle|reload]
   fumo:
-    description: Fumo 玩偶制作命令（仅管理员）
+    description: 玩偶制作命令（仅管理员）
     usage: /fumo [craft [名称]|help]
 permissions:
   tianjicore.command.admin:
     description: 使用 TianjiCore 管理命令
     default: op
   tianjicore.fumo.admin:
-    description: 制作 Fumo 玩偶物品
+    description: 制作玩偶物品
     default: op

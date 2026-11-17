@@ -50,7 +50,7 @@ public class FumoCommand {
     @CommandPermission("tianjicore.fumo.admin")
     @Command("fumo help")
     public void handleHelp(CommandSender sender) {
-        sender.sendMessage(mini.deserialize("<yellow>Fumo 玩偶命令帮助:"));
+        sender.sendMessage(mini.deserialize("<yellow>玩偶命令帮助:"));
         sender.sendMessage(mini.deserialize("<gray>/fumo craft [名称] <white>打开玩偶制作台并自定义 6 槽装备"));
         sender.sendMessage(mini.deserialize("<gray>/fumo help <white>查看此帮助信息"));
     }

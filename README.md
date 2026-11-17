@@ -1,6 +1,6 @@
 # TianjiCore
 
-天际服使用的 Paper 多模块功能插件，提供首次进服欢迎消息、配方解锁同步、生物行为限制以及自定义 Fumo 玩偶摆件功能。
+天际服使用的 Paper 多模块功能插件，提供首次进服欢迎消息、配方解锁同步、生物行为限制以及自定义玩偶摆件功能。
 
 ## 目录
 
@@ -32,7 +32,7 @@
 | `recipebugfix` | 配方修复 | 玩家进服后下一 tick 同步解锁缓存中的全部命名空间配方 | `recipe`、`recipes` | 否 |
 | `phantomspawnblocker` | 阻止幻翼生成 | 拦截所有来源的幻翼生成事件（自然、命令、刷怪蛋等） | `phantom`、`phantomblocker` | 是 |
 | `endermanmushroombugfix` | 禁止末影人搬动方块 | 禁止末影人在任意世界拾取或放置任何方块（保留旧配置键以兼容） | `enderman`、`endermanblockmoveblocker`、`mushroomfix` | 否 |
-| `fumo` | 玩偶 | 管理员通过 GUI 制作固定坐姿的 6 槽装备 Fumo 玩偶摆件，支持自由摆放与蹲下回收 | `doll`、`plush`、`plushie` | 是 |
+| `fumo` | 玩偶 | 管理员通过 GUI 制作固定坐姿的 6 槽装备玩偶摆件，支持自由摆放与蹲下回收 | `doll`、`plush`、`plushie` | 是 |
 
 各模块的详细机制、边缘规则与实现细节请参阅 [模块详细说明](docs/modules.md)。
 
@@ -54,14 +54,14 @@
 - 重载中单个模块失败不会中断其余模块，也不会整体回滚；配置文件存在 YAML 语法错误时，会报错并保留重载前的运行状态。
 - `/tianjicore status` 反映模块的实际运行状态（启动失败的模块即使配置为 `enabled: true` 也会显示关闭）。
 
-### Fumo 玩偶命令
+### 玩偶命令
 
 | 命令 | 说明 | 权限 | 默认权限 |
 | --- | --- | --- | --- |
-| `/fumo` / `/fumo help` | 查看 Fumo 玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
+| `/fumo` / `/fumo help` | 查看玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
 | `/fumo craft [名称]` | 打开 6 槽玩偶制作台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
 
-> 制作 Fumo 需要 `fumo` 模块处于开启状态；已制作出来的 Fumo 玩偶可由任何玩家在世界中右键放置、潜行左键回收。
+> 制作玩偶需要 `fumo` 模块处于开启状态；已制作出来的玩偶可由任何玩家在世界中右键放置、潜行左键回收。
 
 ## 配置文件
 
@@ -102,7 +102,7 @@ mvn clean package
 
 ## 更多文档
 
-- [模块详细说明](docs/modules.md) — 全部五个模块的触发时机、配置说明与 Fumo 玩偶完整玩法及保护机制
+- [模块详细说明](docs/modules.md) — 全部五个模块的触发时机、配置说明与玩偶完整玩法及保护机制
 - [代码结构与开发说明](docs/architecture.md) — 项目目录结构、模块生命周期管理与构建约定
 - [AI 协作规范](AGENTS.md) — 仓库内代码修改、构建与 Git 提交规范
 

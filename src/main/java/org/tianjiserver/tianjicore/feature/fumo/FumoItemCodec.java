@@ -61,7 +61,7 @@ public class FumoItemCodec {
      */
     public static Component resolveDisplayName(String rawName) {
         if (rawName == null || rawName.isBlank()) {
-            return Component.text("Fumo 玩偶", NamedTextColor.GOLD)
+            return Component.text("玩偶", NamedTextColor.GOLD)
                     .decoration(TextDecoration.ITALIC, false);
         }
         return MINI.deserialize(rawName.trim())
@@ -219,7 +219,7 @@ public class FumoItemCodec {
 
     private static List<Component> buildLore() {
         return List.of(
-                loreLine("FUMO玩偶摆件", NamedTextColor.GRAY),
+                loreLine("玩偶摆件", NamedTextColor.GRAY),
                 loreLine("────────────", NamedTextColor.DARK_GRAY),
                 loreLine("拆除方法", NamedTextColor.YELLOW),
                 loreLine("• ", NamedTextColor.DARK_GRAY)
