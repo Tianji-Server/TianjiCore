@@ -183,7 +183,9 @@ public class FumoEntityListener {
             stand.customName(null);
             stand.setCustomNameVisible(false);
 
-            FumoPose.DEFAULT.applyTo(stand);
+            FumoPose.DEFAULT
+                    .withRandomLimbAndHeadJitter(FumoPose.PLACEMENT_JITTER_TOTAL_DEGREES)
+                    .applyTo(stand);
 
             EntityEquipment equipment = stand.getEquipment();
             for (int i = 0; i < FumoItemCodec.FUMO_SLOTS.size(); i++) {
