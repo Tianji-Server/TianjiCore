@@ -32,7 +32,7 @@
 | `recipebugfix` | 配方修复 | 玩家进服后下一 tick 同步解锁缓存中的全部命名空间配方 | `recipe`、`recipes` | 否 |
 | `phantomspawnblocker` | 阻止幻翼生成 | 拦截所有来源的幻翼生成事件（自然、命令、刷怪蛋等） | `phantom`、`phantomblocker` | 是 |
 | `endermanmushroombugfix` | 禁止末影人搬动方块 | 禁止末影人在任意世界拾取或放置任何方块（保留旧配置键以兼容） | `enderman`、`endermanblockmoveblocker`、`mushroomfix` | 否 |
-| `fumo` | 玩偶 | 管理员通过 GUI 制作固定坐姿的 6 槽装备玩偶摆件，支持自由摆放与蹲下回收 | `doll`、`plush`、`plushie` | 是 |
+| `fumo` | 玩偶 | 管理员通过 GUI 制作固定坐姿的 6 槽装备玩偶摆件，支持自由摆放与潜行左键回收 | `doll`、`plush`、`plushie` | 是 |
 
 各模块的详细机制、边缘规则与实现细节请参阅 [模块详细说明](docs/modules.md)。
 
@@ -61,9 +61,9 @@
 | 命令 | 说明 | 权限 | 默认权限 |
 | --- | --- | --- | --- |
 | `/tianji-fumo` / `/tianji-fumo help` | 查看玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
-| `/tianji-fumo craft [名称]` | 打开 6 槽玩偶制作台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
+| `/tianji-fumo craft [名称]` | 打开 6 槽玩偶编辑台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
 
-> 制作玩偶需要 `fumo` 模块处于开启状态；已制作出来的玩偶可由任何玩家在世界中右键放置、潜行左键回收。
+> 制作玩偶需要 `fumo` 模块处于开启状态；已制作出来的玩偶可由任何玩家在世界中右键放置（潜行放置可对齐 45° 朝向）、潜行左键回收。
 
 ## 配置文件
 

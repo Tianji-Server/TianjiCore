@@ -28,10 +28,16 @@ TianjiCore/
         │   ├── FirstJoinMessage.java            # 首次进服欢迎消息模块
         │   ├── PhantomSpawnBlocker.java         # 阻止幻翼生成模块
         │   └── fumo/
-        │       ├── FumoModule.java              # Fumo 模块入口与事件路由
+        │       ├── FumoModule.java              # 玩偶模块入口与事件路由
         │       ├── FumoCommand.java             # /tianji-fumo (/fumo) 命令处理器
-        │       ├── FumoCraftGui.java            # 管理员 6 槽制作 GUI
-        │       ├── FumoItemCodec.java           # Fumo 物品/实体 PDC 编解码器
+        │       ├── FumoCraftGui.java            # 管理员玩偶编辑台会话管理与事件分发
+        │       ├── FumoGuiHolder.java           # 编辑台单玩家会话状态与 InventoryHolder
+        │       ├── FumoGuiLayout.java           # 6×9（54 格）十字架装备槽与右侧面板布局定义
+        │       ├── FumoGuiSlots.java            # 十字架槽位占位符、合法性校验与 Shift 智能填入
+        │       ├── FumoGuiRenderer.java         # 编辑台背景、分割线与右侧控制面板渲染
+        │       ├── FumoGuiInteraction.java      # 槽位放置/拖拽交互与快捷操作处理
+        │       ├── FumoGuiItems.java            # 编辑台物品构建、文本与音效反馈工具
+        │       ├── FumoItemCodec.java           # 玩偶物品/实体 PDC 编解码器
         │       ├── FumoPose.java                # 固定坐姿与放置随机微调
         │       ├── FumoTrackerManager.java      # 隐形重力追踪与落点同步管理器
         │       └── FumoEntityListener.java      # 放置、回收与实体保护逻辑
