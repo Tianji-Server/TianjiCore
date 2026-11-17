@@ -47,6 +47,11 @@ public class FumoItemCodec {
             "(上海アリス幻樂団) 二创"
     );
 
+    /**
+     * 玩偶物品与界面 Lore 使用的统一分割线。
+     */
+    public static final String LORE_DIVIDER = "────────────────";
+
     private static final MiniMessage MINI = MiniMessage.miniMessage();
     private static final GsonComponentSerializer GSON = GsonComponentSerializer.gson();
 
@@ -272,13 +277,14 @@ public class FumoItemCodec {
     private static List<Component> buildLore(boolean includeDerivativeNotice) {
         List<Component> lines = new java.util.ArrayList<>(List.of(
                 loreLine("玩偶摆件", NamedTextColor.GRAY),
-                loreLine("────────────", NamedTextColor.DARK_GRAY),
+                loreLine(LORE_DIVIDER, NamedTextColor.DARK_GRAY),
                 loreLine("拆除方法", NamedTextColor.YELLOW),
                 loreLine("• ", NamedTextColor.DARK_GRAY)
                         .append(loreLine("潜行 + 左键", NamedTextColor.WHITE))
                         .append(loreLine(" 点击玩偶即可回收", NamedTextColor.GRAY))
         ));
         if (includeDerivativeNotice) {
+            lines.add(loreLine(LORE_DIVIDER, NamedTextColor.DARK_GRAY));
             for (String line : DERIVATIVE_NOTICE_LINES) {
                 lines.add(Component.text(line, NamedTextColor.GRAY)
                         .decoration(TextDecoration.ITALIC, true));

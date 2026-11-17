@@ -652,14 +652,14 @@ public class FumoCraftGui {
                 .append(holder.targetDisplayName().decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE)));
         lore.add(nonItalic("装配进度: ", NamedTextColor.GRAY)
                 .append(nonItalic(equippedCount + " / " + INPUT_SLOTS.length + " 槽", countColor)));
-        lore.add(nonItalic("────────────────", NamedTextColor.DARK_GRAY));
+        lore.add(nonItalic(FumoItemCodec.LORE_DIVIDER, NamedTextColor.DARK_GRAY));
 
         for (SlotSpec spec : CROSS_SLOTS) {
             ItemStack equipped = realItemOrNull(inventory.getItem(spec.slot()));
             lore.add(nonItalic(spec.shortLabel() + ": ", NamedTextColor.GRAY).append(describeSlotItem(equipped)));
         }
 
-        lore.add(nonItalic("────────────────", NamedTextColor.DARK_GRAY));
+        lore.add(nonItalic(FumoItemCodec.LORE_DIVIDER, NamedTextColor.DARK_GRAY));
         lore.add(nonItalic("名称仅在物品上显示，放置后不展示悬浮名", NamedTextColor.DARK_GRAY));
 
         return createButton(
