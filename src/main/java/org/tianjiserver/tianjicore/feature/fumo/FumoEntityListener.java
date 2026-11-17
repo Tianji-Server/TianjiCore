@@ -97,29 +97,9 @@ public class FumoEntityListener {
     }
 
     public void onInteractAtEntity(PlayerInteractAtEntityEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
-        if (!(event.getRightClicked() instanceof ArmorStand stand)) {
-            return;
-        }
-        if (codec.isTrackerEntity(stand)) {
+        if (isProtectedArmorStand(event.getRightClicked())) {
             event.setCancelled(true);
-            if (event.getPlayer().isSneaking()) {
-                trackerManager.findTrackedFumo(stand.getUniqueId())
-                        .ifPresent(fumo -> pickupFumo(event.getPlayer(), fumo));
-            }
-            return;
         }
-        if (!codec.isFumoEntity(stand)) {
-            return;
-        }
-        if (!event.getPlayer().isSneaking()) {
-            return;
-        }
-
-        event.setCancelled(true);
-        pickupFumo(event.getPlayer(), stand);
     }
 
     public void onEntityDamage(EntityDamageEvent event) {

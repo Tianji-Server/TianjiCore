@@ -221,22 +221,11 @@ public class FumoItemCodec {
         return List.of(
                 loreLine("FUMO玩偶摆件", NamedTextColor.GRAY),
                 loreLine("────────────", NamedTextColor.DARK_GRAY),
-                loreLine("FUMO特性", NamedTextColor.AQUA),
-                loreBullet("右键方块放置，潜行放置对齐 45° 朝向"),
-                loreBullet("自动落至表面后固定，不受重力与移动影响"),
-                loreBullet("免疫伤害、击退与传送，锁定装备防误取"),
-                loreBullet("放置后不显示悬浮名称，自带轻微坐姿微调"),
-                Component.empty(),
                 loreLine("拆除方法", NamedTextColor.YELLOW),
                 loreLine("• ", NamedTextColor.DARK_GRAY)
-                        .append(loreLine("潜行 + 左键 / 右键", NamedTextColor.WHITE))
+                        .append(loreLine("潜行 + 左键", NamedTextColor.WHITE))
                         .append(loreLine(" 点击玩偶即可回收", NamedTextColor.GRAY))
         );
-    }
-
-    private static Component loreBullet(String text) {
-        return loreLine("• ", NamedTextColor.DARK_GRAY)
-                .append(loreLine(text, NamedTextColor.GRAY));
     }
 
     private static Component loreLine(String text, NamedTextColor color) {

@@ -89,7 +89,7 @@
 
 - 生成的 Fumo 物品材质为 `Material.ARMOR_STAND`：
   - 6 槽装备通过 `ItemStack.serializeItemsAsBytes` 序列化后写入物品 PDC（`fumo_equipment`）。
-  - 物品 Lore 展示 `FUMO玩偶摆件` 标识、FUMO 特性说明及潜行拆除回收方法。
+  - 物品 Lore 展示 `FUMO玩偶摆件` 标识与潜行左键拆除回收方法。
   - 物品名称仅显示在物品栏中，放置到世界后**不显示头顶悬浮名**（`customName(null)`、`setCustomNameVisible(false)`），而是将原始显示名称以 Gson 形式隐式保存在实体 PDC（`fumo_item_name`），以便回收时完整还原。
   - 插件不写入任何外部文件或数据库，也不记录制作者、放置者或归属权。
 
@@ -116,7 +116,7 @@
 
 ### 5.5 回收与实体保护
 
-- **回收方式**：任何玩家均可**蹲下（潜行）**并对准 Fumo 实体（或其活跃的追踪盔甲架）**左键或右键**进行回收，恢复为原始 Fumo 物品并放入背包（背包满时在实体位置自然掉落）。
+- **回收方式**：任何玩家均可**蹲下（潜行）**并对准 Fumo 实体（或其活跃的追踪盔甲架）**左键**进行回收，恢复为原始 Fumo 物品并放入背包（背包满时在实体位置自然掉落）。
 - **防破坏保护**：
   - 锁定 Fumo 与追踪盔甲架全部 6 个装备槽的增删改操作。
   - 拦截原版盔甲架装备操作（`PlayerArmorStandManipulateEvent`）、非潜行交互、各类实体伤害（`EntityDamageEvent`）、击退（`EntityKnockbackEvent`）及传送门传送（`EntityPortalEvent`）。

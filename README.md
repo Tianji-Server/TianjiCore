@@ -61,7 +61,7 @@
 | `/fumo` / `/fumo help` | 查看 Fumo 玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
 | `/fumo craft [名称]` | 打开 6 槽玩偶制作台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
 
-> 制作 Fumo 需要 `fumo` 模块处于开启状态；已制作出来的 Fumo 玩偶可由任何玩家在世界中右键放置、蹲下左键或右键回收。
+> 制作 Fumo 需要 `fumo` 模块处于开启状态；已制作出来的 Fumo 玩偶可由任何玩家在世界中右键放置、潜行左键回收。
 
 ## 配置文件
 
