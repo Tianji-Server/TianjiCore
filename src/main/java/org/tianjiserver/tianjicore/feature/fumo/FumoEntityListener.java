@@ -108,7 +108,9 @@ public class FumoEntityListener {
 
         if (event instanceof EntityDamageByEntityEvent byEntity && byEntity.getDamager() instanceof Player player) {
             event.setCancelled(true);
-            pickupFumo(player, stand);
+            if (player.isSneaking()) {
+                pickupFumo(player, stand);
+            }
             return;
         }
 
