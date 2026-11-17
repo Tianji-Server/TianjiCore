@@ -7,9 +7,8 @@
 每次完成代码或配置修改后，必须按顺序执行以下交付步骤：
 
 1. **编译插件与运行测试**：
-   - 执行 `mvn clean package`，确保 `common`、`paper`、`velocity` 三个模块编译通过、全部单元测试通过，并产出最新的插件 Jar：
-     - Paper 插件：`paper/target/TianjiCore-Paper-<version>.jar`
-     - Velocity 插件：`velocity/target/TianjiCore-Velocity-<version>.jar`
+   - 执行 `mvn clean package`，确保项目编译通过、全部单元测试通过，并产出最新的插件 Jar：
+     - Paper 插件：`target/TianjiCore-<version>.jar`
 2. **提交 Git 变更**：
    - 构建验证通过后，主动将相关修改通过 `git add` 与 `git commit` 提交到本地仓库。
    - 提交信息遵循中文 Conventional Commits 格式（例如 `feat: ...`、`fix: ...`、`build: ...`、`docs: ...`）。
@@ -21,8 +20,8 @@
 编写代码时应参考以下要求进行：
 
 1. **检查项目中是否有可复用库**
-   - 动手前先检索 `common`、`paper`、`velocity` 中已有的工具类、常量、模块管理器与相近实现，优先扩展或抽取复用，不重复实现已有能力。
-   - 复用现有的模块注册（`ModuleTarget`）、配置读写与日志方式，保持与周边代码一致的风格。
+   - 动手前先检索 `src/main/java` 中已有的工具类、常量、模块管理器与相近实现，优先扩展或抽取复用，不重复实现已有能力。
+   - 复用现有的模块注册（`TianjiCoreModuleManager#registerModule`）、配置读写与日志方式，保持与周边代码一致的风格。
 
 2. **联网搜索可复用库**
    - 需要新能力（命令框架、配置库、序列化等）时，先联网搜索成熟且仍在维护的库，确认许可证与项目兼容（MIT）。
