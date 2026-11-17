@@ -25,10 +25,9 @@ public class FumoModule implements Listener, LifecycleModule {
     private final FumoEntityListener entityListener;
 
     public FumoModule(TianjiCore plugin) {
-        FumoPose pose = FumoPose.from(plugin.getConfig());
         FumoItemCodec codec = new FumoItemCodec(plugin);
         this.craftGui = new FumoCraftGui(codec);
-        this.entityListener = new FumoEntityListener(pose, codec);
+        this.entityListener = new FumoEntityListener(codec);
     }
 
     /**

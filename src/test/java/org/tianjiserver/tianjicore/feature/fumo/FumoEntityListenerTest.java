@@ -29,7 +29,7 @@ class FumoEntityListenerTest {
     @BeforeEach
     void setUp() {
         codec = mock(FumoItemCodec.class);
-        listener = new FumoEntityListener(FumoPose.DEFAULT, codec);
+        listener = new FumoEntityListener(codec);
         stand = mock(ArmorStand.class);
         player = mock(Player.class);
         inventory = mock(PlayerInventory.class);

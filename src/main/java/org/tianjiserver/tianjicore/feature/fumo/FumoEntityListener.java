@@ -25,11 +25,9 @@ import java.util.Map;
  */
 public class FumoEntityListener {
 
-    private final FumoPose pose;
     private final FumoItemCodec codec;
 
-    public FumoEntityListener(FumoPose pose, FumoItemCodec codec) {
-        this.pose = pose;
+    public FumoEntityListener(FumoItemCodec codec) {
         this.codec = codec;
     }
 
@@ -119,7 +117,7 @@ public class FumoEntityListener {
             stand.customName(null);
             stand.setCustomNameVisible(false);
 
-            pose.applyTo(stand);
+            FumoPose.DEFAULT.applyTo(stand);
 
             EntityEquipment equipment = stand.getEquipment();
             for (int i = 0; i < FumoItemCodec.FUMO_SLOTS.size(); i++) {

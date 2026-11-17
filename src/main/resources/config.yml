@@ -13,13 +13,3 @@ modules:
 
 first-join-message:
   message: "<gold>欢迎首次加入服务器！"
-
-fumo:
-  # 固定姿势角度（角度制 degrees）
-  pose:
-    head: [0.0, 0.0, 0.0]
-    body: [0.0, 0.0, 0.0]
-    left-arm: [-30.0, 0.0, -15.0]
-    right-arm: [-30.0, 0.0, 15.0]
-    left-leg: [-85.0, -45.0, 0.0]
-    right-leg: [-85.0, 45.0, 0.0]
