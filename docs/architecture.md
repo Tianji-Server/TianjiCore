@@ -20,7 +20,7 @@ TianjiCore/
     │   └── plugin.yml                           # Paper 插件清单（命令、权限、softdepend）
     └── java/org/tianjiserver/tianjicore/
         ├── TianjiCore.java                      # 插件主入口（JavaPlugin）
-        ├── TianjiCoreCommand.java               # /tianjicore (/tianji, /tc) 命令处理器
+        ├── TianjiCoreCommand.java               # /tianjicore (/tc) 命令处理器
         ├── TianjiCoreModuleHelper.java          # 命令层与模块管理器的薄封装
         ├── TianjiCoreModuleManager.java         # 模块注册、启停、重载与配置持久化
         ├── LifecycleModule.java                 # 可选生命周期清理接口（shutdown）
@@ -29,7 +29,7 @@ TianjiCore/
         │   ├── PhantomSpawnBlocker.java         # 阻止幻翼生成模块
         │   └── fumo/
         │       ├── FumoModule.java              # Fumo 模块入口与事件路由
-        │       ├── FumoCommand.java             # /fumo 命令处理器
+        │       ├── FumoCommand.java             # /tianji-fumo (/fumo) 命令处理器
         │       ├── FumoCraftGui.java            # 管理员 6 槽制作 GUI
         │       ├── FumoItemCodec.java           # Fumo 物品/实体 PDC 编解码器
         │       ├── FumoPose.java                # 固定坐姿与放置随机微调
@@ -59,11 +59,15 @@ TianjiCore/
   - 重载前会先使用独立 `YamlConfiguration#load` 校验 `config.yml` 语法，防止 `JavaPlugin#reloadConfig()` 吞掉解析异常导致误报成功。
   - 整体重载按模块顺序应用，单个模块启动失败时记录原因并继续处理后续模块，不会因部分失败中断其他模块。
 
-### 2. 命令框架集成
+### 2. 命令框架集成与命名规范
 
 - 使用 `io.github.revxrsal:lamp.common` 与 `lamp.bukkit`（`4.0.0-rc.17`）注解驱动命令解析。
 - 在 `TianjiCore#onEnable()` 中通过 `BukkitLamp.builder(this).build()` 注册 `TianjiCoreCommand` 与 `FumoCommand`。
 - `FumoCommand` 通过 `Supplier<Optional<FumoModule>>` 按需获取当前已启用的 `fumo` 模块实例，避免直接持有过期引用，从而兼容运行时的 `toggle` 与 `reload`。
+- **命令命名规范**：
+  - 插件核心管理主命令为 `/tianjicore`，缩写别名为 `/tc`（不注册 `/tianji`）。
+  - 模块独立命令的主命令名**必须**以 `tianji-<module>` 格式注册（例如 `/tianji-fumo`），避免与其他插件的根命令冲突。
+  - 仅当模块命令名特征极强、几乎不可能与其他插件冲突时，才允许额外附带无前缀短别名（例如 `/fumo`）；`plugin.yml` 中的命令主名与 `aliases` 须与 Lamp `@Command` 注解保持一致。
 
 ### 3. 构建与依赖策略
 

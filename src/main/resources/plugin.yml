@@ -7,10 +7,12 @@ softdepend: [ Vault ]
 commands:
   tianjicore:
     description: TianjiCore 管理命令
+    aliases: [tc]
     usage: /tianjicore [help|status|toggle|reload]
-  fumo:
+  tianji-fumo:
     description: 玩偶制作命令（仅管理员）
-    usage: /fumo [craft [名称]|help]
+    aliases: [fumo]
+    usage: /tianji-fumo [craft [名称]|help]
 permissions:
   tianjicore.command.admin:
     description: 使用 TianjiCore 管理命令

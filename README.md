@@ -40,7 +40,7 @@
 
 ### 插件管理命令
 
-主命令为 `/tianjicore`，别名 `/tianji`、`/tc`。`<module>` 参数支持模块键或上表中的任意别名（不区分大小写），支持控制台与玩家执行。
+主命令为 `/tianjicore`，别名 `/tc`。`<module>` 参数支持模块键或上表中的任意别名（不区分大小写），支持控制台与玩家执行。
 
 | 命令 | 说明 | 权限 | 默认权限 |
 | --- | --- | --- | --- |
@@ -56,10 +56,12 @@
 
 ### 玩偶命令
 
+主命令为 `/tianji-fumo`，别名 `/fumo`。
+
 | 命令 | 说明 | 权限 | 默认权限 |
 | --- | --- | --- | --- |
-| `/fumo` / `/fumo help` | 查看玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
-| `/fumo craft [名称]` | 打开 6 槽玩偶制作台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
+| `/tianji-fumo` / `/tianji-fumo help` | 查看玩偶命令帮助 | `tianjicore.fumo.admin` | OP |
+| `/tianji-fumo craft [名称]` | 打开 6 槽玩偶制作台 GUI（仅玩家，名称支持 MiniMessage） | `tianjicore.fumo.admin` | OP |
 
 > 制作玩偶需要 `fumo` 模块处于开启状态；已制作出来的玩偶可由任何玩家在世界中右键放置、潜行左键回收。
 

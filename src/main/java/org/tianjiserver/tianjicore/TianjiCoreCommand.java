@@ -16,7 +16,7 @@ import java.util.Optional;
  * TianjiCore 命令入口。
  * 负责对接命令框架，并将模块操作委托给模块辅助层。
  */
-@Command({"tianjicore", "tianji", "tc"})
+@Command({"tianjicore", "tc"})
 public class TianjiCoreCommand {
 
     private final TianjiCoreModuleHelper moduleHelper;
