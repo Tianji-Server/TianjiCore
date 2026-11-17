@@ -55,12 +55,14 @@ public class FumoItemCodec {
     private final Plugin plugin;
     private final NamespacedKey equipmentKey;
     private final NamespacedKey markerKey;
+    private final NamespacedKey trackerMarkerKey;
     private final NamespacedKey entityItemNameKey;
 
     public FumoItemCodec(Plugin plugin) {
         this.plugin = plugin;
         this.equipmentKey = new NamespacedKey(plugin, "fumo_equipment");
         this.markerKey = new NamespacedKey(plugin, "fumo_marker");
+        this.trackerMarkerKey = new NamespacedKey(plugin, "fumo_tracker_marker");
         this.entityItemNameKey = new NamespacedKey(plugin, "fumo_item_name");
     }
 
@@ -95,6 +97,16 @@ public class FumoItemCodec {
             return false;
         }
         return stand.getPersistentDataContainer().has(markerKey, PersistentDataType.BYTE);
+    }
+
+    /**
+     * 判断给定实体是否为 Fumo 落点追踪用隐形盔甲架。
+     */
+    public boolean isTrackerEntity(Entity entity) {
+        if (!(entity instanceof ArmorStand stand)) {
+            return false;
+        }
+        return stand.getPersistentDataContainer().has(trackerMarkerKey, PersistentDataType.BYTE);
     }
 
     /**
@@ -166,6 +178,13 @@ public class FumoItemCodec {
         if (itemDisplayName != null) {
             pdc.set(entityItemNameKey, PersistentDataType.STRING, GSON.serialize(itemDisplayName));
         }
+    }
+
+    /**
+     * 标记放置时临时生成的重力追踪隐形盔甲架。
+     */
+    public void markTrackerEntity(ArmorStand stand) {
+        stand.getPersistentDataContainer().set(trackerMarkerKey, PersistentDataType.BYTE, (byte) 1);
     }
 
     /**

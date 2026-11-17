@@ -1,10 +1,12 @@
 package org.tianjiserver.tianjicore.feature.fumo;
 
+import io.papermc.paper.event.entity.EntityKnockbackEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -12,6 +14,7 @@ import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
 import org.tianjiserver.tianjicore.LifecycleModule;
 import org.tianjiserver.tianjicore.TianjiCore;
 
@@ -27,7 +30,7 @@ public class FumoModule implements Listener, LifecycleModule {
     public FumoModule(TianjiCore plugin) {
         FumoItemCodec codec = new FumoItemCodec(plugin);
         this.craftGui = new FumoCraftGui(codec);
-        this.entityListener = new FumoEntityListener(codec);
+        this.entityListener = new FumoEntityListener(plugin, codec);
     }
 
     /**
@@ -40,6 +43,7 @@ public class FumoModule implements Listener, LifecycleModule {
     @Override
     public void shutdown() {
         craftGui.shutdown();
+        entityListener.shutdown();
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -80,5 +84,20 @@ public class FumoModule implements Listener, LifecycleModule {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         entityListener.onEntityDamage(event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityKnockback(EntityKnockbackEvent event) {
+        entityListener.onEntityKnockback(event);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onEntityPortal(EntityPortalEvent event) {
+        entityListener.onEntityPortal(event);
+    }
+
+    @EventHandler
+    public void onEntitiesLoad(EntitiesLoadEvent event) {
+        entityListener.onEntitiesLoad(event);
     }
 }
