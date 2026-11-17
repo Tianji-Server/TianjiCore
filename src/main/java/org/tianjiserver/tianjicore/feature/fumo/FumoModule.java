@@ -29,7 +29,7 @@ public class FumoModule implements Listener, LifecycleModule {
 
     public FumoModule(TianjiCore plugin) {
         FumoItemCodec codec = new FumoItemCodec(plugin);
-        this.craftGui = new FumoCraftGui(codec);
+        this.craftGui = new FumoCraftGui(plugin, codec);
         this.entityListener = new FumoEntityListener(plugin, codec);
     }
 
