@@ -41,10 +41,10 @@ class FumoConfigAndPoseTest {
     }
 
     @Test
-    void defaultPoseSpreadsArmsOutward15DegreesAndLegs90DegreesApart() {
+    void defaultPoseSpreadsArmsOutward15DegreesAndLegs60DegreesApart() {
         assertEquals(FumoPose.degreesToEulerAngle(-30.0, 0.0, -15.0), FumoPose.DEFAULT.leftArm());
         assertEquals(FumoPose.degreesToEulerAngle(-30.0, 0.0, 15.0), FumoPose.DEFAULT.rightArm());
-        assertEquals(FumoPose.degreesToEulerAngle(-85.0, -45.0, 0.0), FumoPose.DEFAULT.leftLeg());
-        assertEquals(FumoPose.degreesToEulerAngle(-85.0, 45.0, 0.0), FumoPose.DEFAULT.rightLeg());
+        assertEquals(FumoPose.degreesToEulerAngle(-85.0, -30.0, 0.0), FumoPose.DEFAULT.leftLeg());
+        assertEquals(FumoPose.degreesToEulerAngle(-85.0, 30.0, 0.0), FumoPose.DEFAULT.rightLeg());
     }
 }
