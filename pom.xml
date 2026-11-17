@@ -73,10 +73,6 @@
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
         <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-        <repository>
             <id>codemc-repo</id>
             <url>https://repo.codemc.io/repository/maven-public/</url>
         </repository>
@@ -89,21 +85,15 @@
             <version>${paper.version}</version>
             <scope>provided</scope>
         </dependency>
-            <dependency>
-                <groupId>io.github.revxrsal</groupId>
-                <artifactId>lamp.common</artifactId>
-                <version>${lamp.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.github.revxrsal</groupId>
-                <artifactId>lamp.bukkit</artifactId>
-                <version>${lamp.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.MilkBowl</groupId>
-                <artifactId>VaultAPI</artifactId>
-                <version>1.7.1</version>
-                <scope>provided</scope>
-            </dependency>
-        </dependencies>
+        <dependency>
+            <groupId>io.github.revxrsal</groupId>
+            <artifactId>lamp.common</artifactId>
+            <version>${lamp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.revxrsal</groupId>
+            <artifactId>lamp.bukkit</artifactId>
+            <version>${lamp.version}</version>
+        </dependency>
+    </dependencies>
 </project>

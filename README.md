@@ -16,7 +16,6 @@
 
 - **构建版本**：`1.0.4`
 - **运行要求**：Java 25、Paper `26.2`（基于 Paper API `26.2.build.60-beta` 编译）
-- **可选依赖**：`Vault`（`softdepend`，当前全部五个模块均无需安装 Vault）
 
 安装步骤：
 
@@ -99,7 +98,7 @@ mvn clean package
 ```
 
 - 构建产物：`target/TianjiCore-1.0.4.jar`
-- 依赖打包：Lamp 命令框架（`lamp.common` / `lamp.bukkit` `4.0.0-rc.17`）会打包并重定位至 `relocate.TianjiCore.revxrsal`；Paper API 与 Vault API 为 `provided` 范围，不打入产物。
+- 依赖打包：Lamp 命令框架（`lamp.common` / `lamp.bukkit` `4.0.0-rc.17`）会打包并重定位至 `relocate.TianjiCore.revxrsal`；Paper API 为 `provided` 范围，不打入产物。
 - 本项目不设测试代码（见 [AGENTS.md](AGENTS.md)），修改后通过编译打包及服务端实际运行 `/tianjicore status` 与日志检查验证。
 
 ## 更多文档

@@ -3,7 +3,6 @@ version: ${project.version}
 main: org.tianjiserver.tianjicore.TianjiCore
 api-version: '26.2'
 authors: [ Tianji-Community ]
-softdepend: [ Vault ]
 commands:
   tianjicore:
     description: TianjiCore 管理命令

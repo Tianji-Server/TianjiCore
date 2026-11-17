@@ -17,7 +17,7 @@ TianjiCore/
 └── src/main/
     ├── resources/
     │   ├── config.yml                           # 默认配置文件
-    │   └── plugin.yml                           # Paper 插件清单（命令、权限、softdepend）
+    │   └── plugin.yml                           # Paper 插件清单（命令、权限）
     └── java/org/tianjiserver/tianjicore/
         ├── TianjiCore.java                      # 插件主入口（JavaPlugin）
         ├── TianjiCoreCommand.java               # /tianjicore (/tc) 命令处理器
