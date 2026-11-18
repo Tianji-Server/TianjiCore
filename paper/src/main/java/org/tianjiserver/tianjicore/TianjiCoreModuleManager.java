@@ -3,6 +3,14 @@ package org.tianjiserver.tianjicore;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.tianjiserver.tianjicore.common.protocol.ControlProtocol;
+import org.tianjiserver.tianjicore.common.protocol.ModuleInfoDto;
+import org.tianjiserver.tianjicore.common.protocol.ReloadFailureDto;
+import org.tianjiserver.tianjicore.common.protocol.ReloadResponse;
+import org.tianjiserver.tianjicore.common.protocol.ReloadStatus;
+import org.tianjiserver.tianjicore.common.protocol.StatusResponse;
+import org.tianjiserver.tianjicore.common.protocol.ToggleResponse;
+import org.tianjiserver.tianjicore.common.protocol.ToggleStatus;
 import org.tianjiserver.tianjicore.feature.FirstJoinMessage;
 import org.tianjiserver.tianjicore.feature.PhantomSpawnBlocker;
 import org.tianjiserver.tianjicore.feature.fumo.FumoModule;
@@ -27,13 +35,8 @@ import java.util.stream.Collectors;
  */
 class TianjiCoreModuleManager {
 
-    private static final String RELOAD_PLUGIN_TARGET = "plugin";
-    private static final Set<String> RELOAD_PLUGIN_ALIASES = Set.of(
-            "plugin",
-            "core",
-            "all",
-            "tianjicore"
-    );
+    private static final String RELOAD_PLUGIN_TARGET = ControlProtocol.RELOAD_PLUGIN_TARGET;
+    private static final Set<String> RELOAD_PLUGIN_ALIASES = Set.copyOf(ControlProtocol.DEFAULT_RELOAD_PLUGIN_ALIASES);
 
     private final TianjiCore plugin;
     private final Map<String, ModuleState> modules = new LinkedHashMap<>();
@@ -103,21 +106,28 @@ class TianjiCoreModuleManager {
     }
 
     /**
+     * 查询所有模块当前运行状态。
+     */
+    StatusResponse status() {
+        return new StatusResponse(getModuleInfos(), RELOAD_PLUGIN_TARGET);
+    }
+
+    /**
      * 切换指定模块的启停状态。
      */
-    ToggleResult toggle(String rawModuleInput) {
+    ToggleResponse toggle(String rawModuleInput) {
         ModuleState module = findModule(rawModuleInput);
         if (module == null) {
-            return new ToggleResult(ToggleStatus.UNKNOWN_MODULE, null);
+            return new ToggleResponse(ToggleStatus.UNKNOWN_MODULE, null, getToggleableModuleKeys());
         }
         if (!module.toggleable) {
-            return new ToggleResult(ToggleStatus.NOT_TOGGLEABLE, module.toInfo());
+            return new ToggleResponse(ToggleStatus.NOT_TOGGLEABLE, module.toInfo(), getToggleableModuleKeys());
         }
 
         boolean targetState = !module.enabled;
         // toggle 的目标状态为“当前状态取反”。
         if (targetState && !startModule(module)) {
-            return new ToggleResult(ToggleStatus.FAILED, module.toInfo());
+            return new ToggleResponse(ToggleStatus.FAILED, module.toInfo(), getToggleableModuleKeys());
         }
         if (!targetState) {
             stopModule(module);
@@ -125,18 +135,18 @@ class TianjiCoreModuleManager {
 
         plugin.getConfig().set(moduleConfigPath(module.key), targetState);
         plugin.saveConfig();
-        return new ToggleResult(ToggleStatus.SUCCESS, module.toInfo());
+        return new ToggleResponse(ToggleStatus.SUCCESS, module.toInfo(), getToggleableModuleKeys());
     }
 
     /**
      * 重载插件配置，并按目标刷新对应模块。
      */
-    ReloadResult reload(String rawTargetInput) {
+    ReloadResponse reload(String rawTargetInput) {
         String target = normalize(rawTargetInput);
         boolean reloadPlugin = RELOAD_PLUGIN_ALIASES.contains(target);
         ModuleState module = findModule(rawTargetInput);
         if (!reloadPlugin && module == null) {
-            return new ReloadResult(ReloadStatus.UNKNOWN_MODULE, null, List.of());
+            return new ReloadResponse(ReloadStatus.UNKNOWN_MODULE, null, List.of(), getModuleKeys(), RELOAD_PLUGIN_TARGET);
         }
 
         try {
@@ -148,19 +158,21 @@ class TianjiCoreModuleManager {
             plugin.reloadConfig();
         } catch (Exception exception) {
             plugin.getLogger().log(Level.SEVERE, "插件配置重载失败", exception);
-            return new ReloadResult(ReloadStatus.FAILED, null,
-                    List.of(new ReloadFailure("config.yml", failureReason(exception))));
+            return new ReloadResponse(ReloadStatus.FAILED, null,
+                    List.of(new ReloadFailureDto("config.yml", failureReason(exception))),
+                    getModuleKeys(), RELOAD_PLUGIN_TARGET);
         }
 
         if (reloadPlugin) {
-            List<ReloadFailure> failures = applyConfigStates(true);
-            return new ReloadResult(failures.isEmpty() ? ReloadStatus.SUCCESS_PLUGIN : ReloadStatus.FAILED,
-                    null, failures);
+            List<ReloadFailureDto> failures = applyConfigStates(true);
+            return new ReloadResponse(failures.isEmpty() ? ReloadStatus.SUCCESS_PLUGIN : ReloadStatus.FAILED,
+                    null, failures, getModuleKeys(), RELOAD_PLUGIN_TARGET);
         }
 
-        ReloadFailure failure = applyConfigState(module, true);
-        return new ReloadResult(failure == null ? ReloadStatus.SUCCESS_MODULE : ReloadStatus.FAILED,
-                module.toInfo(), failure == null ? List.of() : List.of(failure));
+        ReloadFailureDto failure = applyConfigState(module, true);
+        return new ReloadResponse(failure == null ? ReloadStatus.SUCCESS_MODULE : ReloadStatus.FAILED,
+                module.toInfo(), failure == null ? List.of() : List.of(failure),
+                getModuleKeys(), RELOAD_PLUGIN_TARGET);
     }
 
     /**
@@ -190,7 +202,7 @@ class TianjiCoreModuleManager {
     /**
      * 返回模块实际运行状态，而非配置中的目标状态。
      */
-    List<ModuleInfo> getModuleInfos() {
+    List<ModuleInfoDto> getModuleInfos() {
         return modules.values().stream().map(ModuleState::toInfo).toList();
     }
 
@@ -215,10 +227,10 @@ class TianjiCoreModuleManager {
         return Optional.of(moduleType.cast(module.listenerInstance));
     }
 
-    private List<ReloadFailure> applyConfigStates(boolean forceRestartEnabledModule) {
-        List<ReloadFailure> failures = new ArrayList<>();
+    private List<ReloadFailureDto> applyConfigStates(boolean forceRestartEnabledModule) {
+        List<ReloadFailureDto> failures = new ArrayList<>();
         for (ModuleState module : modules.values()) {
-            ReloadFailure failure = applyConfigState(module, forceRestartEnabledModule);
+            ReloadFailureDto failure = applyConfigState(module, forceRestartEnabledModule);
             if (failure != null) {
                 failures.add(failure);
             }
@@ -226,13 +238,13 @@ class TianjiCoreModuleManager {
         return List.copyOf(failures);
     }
 
-    private ReloadFailure applyConfigState(ModuleState module, boolean forceRestartEnabledModule) {
+    private ReloadFailureDto applyConfigState(ModuleState module, boolean forceRestartEnabledModule) {
         try {
             boolean shouldEnable = plugin.getConfig().getBoolean(moduleConfigPath(module.key), true);
             if (shouldEnable) {
                 boolean started = forceRestartEnabledModule ? restartModule(module) : startModule(module);
                 if (!started) {
-                    return new ReloadFailure(module.key, module.lastFailure);
+                    return new ReloadFailureDto(module.key, module.lastFailure);
                 }
             } else {
                 stopModule(module);
@@ -240,7 +252,7 @@ class TianjiCoreModuleManager {
             return null;
         } catch (Exception exception) {
             plugin.getLogger().log(Level.SEVERE, "模块配置应用失败: " + module.key, exception);
-            return new ReloadFailure(module.key, failureReason(exception));
+            return new ReloadFailureDto(module.key, failureReason(exception));
         }
     }
 
@@ -346,53 +358,6 @@ class TianjiCoreModuleManager {
                 + (message == null || message.isBlank() ? "" : ": " + message);
     }
 
-    /**
-     * toggle 操作返回状态。
-     */
-    enum ToggleStatus {
-        SUCCESS,
-        UNKNOWN_MODULE,
-        NOT_TOGGLEABLE,
-        FAILED
-    }
-
-    /**
-     * reload 操作返回状态。
-     */
-    enum ReloadStatus {
-        SUCCESS_PLUGIN,
-        SUCCESS_MODULE,
-        UNKNOWN_MODULE,
-        FAILED
-    }
-
-    /**
-     * 供命令层回显的模块信息快照。
-     */
-    record ModuleInfo(String key, String displayName, boolean enabled) {
-    }
-
-    /**
-     * toggle 操作结果对象。
-     */
-    record ToggleResult(ToggleStatus status, ModuleInfo moduleInfo) {
-    }
-
-    /**
-     * 重载失败的目标及原因。
-     */
-    record ReloadFailure(String target, String reason) {
-    }
-
-    /**
-     * reload 操作结果对象。
-     */
-    record ReloadResult(ReloadStatus status, ModuleInfo moduleInfo, List<ReloadFailure> failures) {
-        ReloadResult {
-            failures = List.copyOf(failures);
-        }
-    }
-
     private static class ModuleState {
         private final String key;
         private final String displayName;
@@ -416,8 +381,8 @@ class TianjiCoreModuleManager {
             this.enabled = false;
         }
 
-        private ModuleInfo toInfo() {
-            return new ModuleInfo(key, displayName, enabled);
+        private ModuleInfoDto toInfo() {
+            return new ModuleInfoDto(key, displayName, enabled, toggleable);
         }
     }
 }

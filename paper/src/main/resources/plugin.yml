@@ -4,18 +4,11 @@ main: org.tianjiserver.tianjicore.TianjiCore
 api-version: '26.2'
 authors: [ Tianji-Community ]
 commands:
-  tianjicore:
-    description: TianjiCore 管理命令
-    aliases: [tc]
-    usage: /tianjicore [help|status|toggle|reload]
   tianji-fumo:
     description: 玩偶制作命令（仅管理员）
     aliases: [fumo]
     usage: /tianji-fumo [craft [名称]|help]
 permissions:
-  tianjicore.command.admin:
-    description: 使用 TianjiCore 管理命令
-    default: op
   tianjicore.fumo.admin:
     description: 制作玩偶物品
     default: op

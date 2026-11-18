@@ -1,0 +1,11 @@
+# Velocity 端 HTTP 请求超时时间（毫秒）
+request-timeout-ms: 5000
+
+# 全局默认控制密钥（当单个子服未单独配置 token 时使用）
+default-token: ""
+
+# 受管的后端 Paper 服务器列表（请填写对应子服的 Paper control-server 地址与密钥）
+servers:
+  lobby:
+    url: "http://127.0.0.1:28765"
+    token: ""

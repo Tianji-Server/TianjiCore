@@ -13,3 +13,10 @@ modules:
 
 first-join-message:
   message: "<gold>欢迎首次加入服务器！"
+
+control-server:
+  enabled: true
+  host: "127.0.0.1"
+  port: 28765
+  # 首次启动若为空将自动生成随机密钥；请将该密钥同步配置到 Velocity 端 plugins/tianjicore-velocity/config.yml。
+  token: ""
