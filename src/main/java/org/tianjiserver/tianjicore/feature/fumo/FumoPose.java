@@ -32,8 +32,8 @@ public record FumoPose(
             degreesToEulerAngle(0.0, 0.0, 0.0),
             degreesToEulerAngle(-30.0, 0.0, -15.0),
             degreesToEulerAngle(-30.0, 0.0, 15.0),
-            degreesToEulerAngle(-85.0, -30.0, 0.0),
-            degreesToEulerAngle(-85.0, 30.0, 0.0)
+            degreesToEulerAngle(-85.0, -20.0, 0.0),
+            degreesToEulerAngle(-85.0, 20.0, 0.0)
     );
 
     /**
