@@ -25,7 +25,7 @@ import java.util.List;
 @Plugin(
         id = "tianjicore-velocity",
         name = "TianjiCore-Velocity",
-        version = "1.0.4",
+        version = "1.0.5",
         description = "TianjiCore Velocity 代理端管理插件",
         authors = {"Tianji-Community"}
 )

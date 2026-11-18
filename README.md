@@ -14,19 +14,20 @@
 
 ## 运行环境与安装
 
-- **构建版本**：`1.0.4`
+- **构建版本**：`1.0.5`
 - **运行要求**：Java 25、Paper `26.2`（基于 Paper API `26.2.build.60-beta` 编译）、Velocity `3.5.x`（基于 Velocity API `3.5.1` 编译）
 
 安装与配对步骤：
 
 1. 获取或构建产物：
-   - Paper 端：`paper/target/TianjiCore-1.0.4.jar`
-   - Velocity 端：`velocity/target/TianjiCore-Velocity-1.0.4.jar`
-2. 将 `TianjiCore-1.0.4.jar` 放入各后端 Paper 服务器的 `plugins/` 目录并启动。
+   - Paper 端：`paper/target/TianjiCore-1.0.5.jar`
+   - Velocity 端：`velocity/target/TianjiCore-Velocity-1.0.5.jar`
+2. 将 `TianjiCore-1.0.5.jar` 放入各后端 Paper 服务器的 `plugins/` 目录并启动。
    - 首次启动会自动生成 `plugins/TianjiCore/config.yml`，并在 `control-server.token` 为空时自动生成随机控制密钥。
-3. 将 `TianjiCore-Velocity-1.0.4.jar` 放入 Velocity 代理端的 `plugins/` 目录并启动。
+3. 将 `TianjiCore-Velocity-1.0.5.jar` 放入 Velocity 代理端的 `plugins/` 目录并启动。
    - 首次启动会生成 `plugins/tianjicore-velocity/config.yml`。
 4. 在 Velocity 端 `plugins/tianjicore-velocity/config.yml` 中配置各 Paper 子服的 `url` 与对应 `token`（或 `default-token`），执行 `/tc reload proxy` 即可生效。
+   - 如需轮换控制密钥，同时更新两端 `config.yml` 中的 `token` 后执行 `/tc reload plugin`；Velocity 端在遇到 `401` 时会自动使用旧密钥重试一次以完成平滑切换。
 
 ## 功能模块
 
@@ -129,8 +130,8 @@ mvn clean package
 ```
 
 - 构建产物：
-  - Paper 插件：`paper/target/TianjiCore-1.0.4.jar`
-  - Velocity 插件：`velocity/target/TianjiCore-Velocity-1.0.4.jar`
+  - Paper 插件：`paper/target/TianjiCore-1.0.5.jar`
+  - Velocity 插件：`velocity/target/TianjiCore-Velocity-1.0.5.jar`
 - 依赖打包：
   - Paper 端将 Lamp（`lamp.common` / `lamp.bukkit` `4.0.0-rc.17`）与 `common` 模块打包，并重定位至 `relocate.TianjiCore.revxrsal`；Paper API 为 `provided` 范围。
   - Velocity 端将 Lamp（`lamp.common` / `lamp.brigadier` / `lamp.velocity` `4.0.0-rc.17`）与 `common` 模块打包，并重定位至 `relocate.TianjiCoreVelocity.revxrsal`；Velocity API 为 `provided` 范围。

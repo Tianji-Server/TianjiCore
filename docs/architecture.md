@@ -101,7 +101,8 @@ TianjiCore/
 - **鉴权与线程安全**：
   - 所有请求须携带 `Authorization: Bearer <token>`，Paper 端使用 `MessageDigest.isEqual` 常量时间比对；若首次启动 `control-server.token` 为空则自动生成高熵随机密钥并写回 `config.yml`。
   - Paper 端收到控制请求后，通过 `Bukkit.getScheduler().callSyncMethod` 调度到 Bukkit 主线程执行模块操作，保障事件注册与实体/GUI 清理的线程安全。
-  - 若 `reload plugin` 修改了 `control-server` 自身配置，Paper 端先写回当前 HTTP 响应，再于独立虚拟线程中重启监听器以防止中断当前请求连接。
+  - 若远程 `reload`（模块或 `plugin`）修改了 `control-server` 自身配置：仅 `token` 变更时热更新鉴权配置，无需重启端口；`port` 变更时先预绑定并启动新监听（失败则保留原监听并在响应中上报失败），再在响应写回后关闭旧监听；`enabled=false` 时在响应写回后停用监听；仅 `host` 变更时在响应写回后于虚拟线程中切换监听并支持失败回滚。
+  - Velocity 端执行 `/tc reload plugin` 时若检测到子服配置中的 `token` 发生变化，在遇到 `401` 时会自动使用旧快照中的原密钥重试一次，支持两端同步密钥轮换。
 
 ### 3. 命令框架集成与命名规范
 
