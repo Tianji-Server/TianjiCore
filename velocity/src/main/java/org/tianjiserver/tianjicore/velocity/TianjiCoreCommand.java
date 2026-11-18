@@ -23,8 +23,10 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Velocity 端 TianjiCore 管理命令处理器。
@@ -90,6 +92,7 @@ public class TianjiCoreCommand {
         boolean reloadProxyOnly = ControlProtocol.RELOAD_PROXY_ALIASES.contains(normalizedTarget);
         boolean reloadPlugin = ControlProtocol.DEFAULT_RELOAD_PLUGIN_ALIASES.contains(normalizedTarget);
 
+        ConfigSnapshot previousSnapshot = velocityConfig.getSnapshot();
         if (reloadProxyOnly || reloadPlugin) {
             try {
                 velocityConfig.reload();
@@ -112,7 +115,8 @@ public class TianjiCoreCommand {
             return;
         }
 
-        httpClient.reloadTarget(targets, targetInput, snapshot.requestTimeoutMs())
+        Map<String, String> fallbackTokens = buildFallbackTokens(previousSnapshot, snapshot);
+        httpClient.reloadTarget(targets, targetInput, snapshot.requestTimeoutMs(), fallbackTokens)
                 .whenComplete((results, throwable) -> {
                     if (throwable != null) {
                         sendUnexpectedError(source, throwable);
@@ -120,6 +124,26 @@ public class TianjiCoreCommand {
                     }
                     renderReloadResults(source, targetInput, results);
                 });
+    }
+
+    private static Map<String, String> buildFallbackTokens(
+            ConfigSnapshot previousSnapshot,
+            ConfigSnapshot currentSnapshot
+    ) {
+        if (previousSnapshot == currentSnapshot || previousSnapshot.servers().isEmpty()) {
+            return Map.of();
+        }
+        Map<String, String> fallbackTokens = new HashMap<>();
+        for (BackendServerConfig current : currentSnapshot.servers().values()) {
+            BackendServerConfig previous = previousSnapshot.servers().get(current.normalizedName());
+            if (previous != null
+                    && previous.token() != null
+                    && !previous.token().isBlank()
+                    && !previous.token().equals(current.token())) {
+                fallbackTokens.put(current.normalizedName(), previous.token());
+            }
+        }
+        return fallbackTokens;
     }
 
     /**

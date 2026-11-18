@@ -8,6 +8,7 @@ import org.tianjiserver.tianjicore.TianjiCore;
 import org.tianjiserver.tianjicore.TianjiCoreModuleHelper;
 import org.tianjiserver.tianjicore.common.protocol.ControlProtocol;
 import org.tianjiserver.tianjicore.common.protocol.ErrorResponse;
+import org.tianjiserver.tianjicore.common.protocol.ReloadFailureDto;
 import org.tianjiserver.tianjicore.common.protocol.ReloadRequest;
 import org.tianjiserver.tianjicore.common.protocol.ReloadResponse;
 import org.tianjiserver.tianjicore.common.protocol.ReloadStatus;
@@ -20,6 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -58,22 +61,15 @@ public class ControlHttpServer {
             plugin.getLogger().info("HTTP 控制服务端未启用 (control-server.enabled=false)");
             return;
         }
-        if (settings.port() < 1 || settings.port() > 65535) {
+        if (!isValidPort(settings.port())) {
             plugin.getLogger().severe("HTTP 控制服务端端口无效: " + settings.port() + "，未启动监听");
             return;
         }
 
         try {
-            HttpServer httpServer = HttpServer.create(new InetSocketAddress(settings.host(), settings.port()), 0);
-            ExecutorService virtualExecutor = Executors.newVirtualThreadPerTaskExecutor();
-            httpServer.setExecutor(virtualExecutor);
-            httpServer.createContext(ControlProtocol.API_STATUS_PATH, this::handleStatus);
-            httpServer.createContext(ControlProtocol.API_TOGGLE_PATH, this::handleToggle);
-            httpServer.createContext(ControlProtocol.API_RELOAD_PATH, this::handleReload);
-            httpServer.start();
-
-            this.server = httpServer;
-            this.executor = virtualExecutor;
+            ActiveListener listener = createAndStartListener(settings);
+            this.server = listener.server();
+            this.executor = listener.executor();
             plugin.getLogger().info("HTTP 控制服务端已监听 " + settings.host() + ":" + settings.port());
         } catch (IOException exception) {
             plugin.getLogger().log(Level.SEVERE, "HTTP 控制服务端启动失败", exception);
@@ -84,14 +80,9 @@ public class ControlHttpServer {
      * 停止控制 HTTP 服务端并释放监听端口。
      */
     public synchronized void stop() {
-        if (server != null) {
-            server.stop(0);
-            server = null;
-        }
-        if (executor != null) {
-            executor.close();
-            executor = null;
-        }
+        shutdownListener(this.server, this.executor);
+        this.server = null;
+        this.executor = null;
     }
 
     private void handleStatus(HttpExchange exchange) throws IOException {
@@ -144,15 +135,29 @@ public class ControlHttpServer {
 
         ServerSettings settingsBeforeReload = this.activeSettings;
         try {
-            ReloadResponse response = runOnMainThread(() -> moduleHelper.reloadModule(request.target()));
-            // 先完成响应写入，再异步检查控制端自身配置变更并重启，避免断开当前 HTTP 连接。
-            sendJson(exchange, 200, response);
+            ReloadExecution execution = runOnMainThread(() -> {
+                ReloadResponse reloadResponse = moduleHelper.reloadModule(request.target());
+                ServerSettings latest = reloadResponse.status() == ReloadStatus.UNKNOWN_MODULE
+                        ? settingsBeforeReload
+                        : loadOrInitializeSettings();
+                return new ReloadExecution(reloadResponse, latest);
+            });
 
-            if (response.status() != ReloadStatus.UNKNOWN_MODULE) {
-                ServerSettings latestSettings = readSettingsFromConfig();
-                if (!Objects.equals(settingsBeforeReload, latestSettings)) {
-                    Thread.ofVirtual().name("tianjicore-http-restart").start(this::restartFromCurrentConfig);
+            ReloadResponse response = execution.response();
+            Runnable postSendAction = null;
+            if (response.status() != ReloadStatus.UNKNOWN_MODULE
+                    && !Objects.equals(settingsBeforeReload, execution.latestSettings())) {
+                ListenerUpdateResult updateResult = prepareListenerUpdate(settingsBeforeReload, execution.latestSettings());
+                postSendAction = updateResult.postSendAction();
+                if (updateResult.failureReason() != null) {
+                    response = appendControlServerFailure(response, updateResult.failureReason());
                 }
+            }
+
+            // 完成响应写入后再执行旧监听关闭等后续动作，避免断开当前 HTTP 连接。
+            sendJson(exchange, 200, response);
+            if (postSendAction != null) {
+                Thread.ofVirtual().name("tianjicore-http-restart").start(postSendAction);
             }
         } catch (Exception exception) {
             plugin.getLogger().log(Level.SEVERE, "处理 reload 控制请求失败", exception);
@@ -160,13 +165,120 @@ public class ControlHttpServer {
         }
     }
 
-    private synchronized void restartFromCurrentConfig() {
+    private synchronized ListenerUpdateResult prepareListenerUpdate(
+            ServerSettings previousSettings,
+            ServerSettings latestSettings
+    ) {
+        if (!plugin.isEnabled()) {
+            return new ListenerUpdateResult(null, null);
+        }
+        if (!latestSettings.enabled()) {
+            this.activeSettings = latestSettings;
+            plugin.getLogger().info("检测到 control-server.enabled=false，正在关闭 HTTP 控制服务端...");
+            return new ListenerUpdateResult(null, this::stop);
+        }
+        if (!isValidPort(latestSettings.port())) {
+            String reason = "HTTP 控制端口无效: " + latestSettings.port() + "，已保留原监听";
+            plugin.getLogger().severe(reason);
+            return new ListenerUpdateResult(reason, null);
+        }
+        if (this.server != null
+                && Objects.equals(previousSettings.host(), latestSettings.host())
+                && previousSettings.port() == latestSettings.port()) {
+            this.activeSettings = latestSettings;
+            plugin.getLogger().info("已更新 HTTP 控制服务端鉴权配置");
+            return new ListenerUpdateResult(null, null);
+        }
+        if (this.server == null || previousSettings.port() != latestSettings.port()) {
+            try {
+                ActiveListener newListener = createAndStartListener(latestSettings);
+                HttpServer oldServer = this.server;
+                ExecutorService oldExecutor = this.executor;
+                this.server = newListener.server();
+                this.executor = newListener.executor();
+                this.activeSettings = latestSettings;
+                plugin.getLogger().info("HTTP 控制服务端已切换监听至 "
+                        + latestSettings.host() + ":" + latestSettings.port());
+                Runnable closeOld = oldServer == null && oldExecutor == null
+                        ? null
+                        : () -> shutdownListener(oldServer, oldExecutor);
+                return new ListenerUpdateResult(null, closeOld);
+            } catch (IOException exception) {
+                String detail = exception.getMessage() == null || exception.getMessage().isBlank()
+                        ? exception.getClass().getSimpleName()
+                        : exception.getMessage();
+                String reason = "新 HTTP 监听启动失败 (" + latestSettings.host() + ":" + latestSettings.port()
+                        + "): " + detail + "，已保留原监听";
+                plugin.getLogger().log(Level.SEVERE, reason, exception);
+                return new ListenerUpdateResult(reason, null);
+            }
+        }
+
+        // 端口不变但监听地址变更时无法预绑定同一端口，响应发送后再切换并在失败时回滚原监听。
+        return new ListenerUpdateResult(null, () -> switchHostSamePort(previousSettings, latestSettings));
+    }
+
+    private synchronized void switchHostSamePort(ServerSettings previousSettings, ServerSettings targetSettings) {
         if (!plugin.isEnabled()) {
             return;
         }
-        plugin.getLogger().info("检测到 control-server 配置变更，正在重启 HTTP 控制服务端...");
+        plugin.getLogger().info("检测到 control-server 监听地址变更，正在重启 HTTP 控制服务端...");
         stop();
-        start();
+        try {
+            ActiveListener listener = createAndStartListener(targetSettings);
+            this.server = listener.server();
+            this.executor = listener.executor();
+            this.activeSettings = targetSettings;
+            plugin.getLogger().info("HTTP 控制服务端已监听 " + targetSettings.host() + ":" + targetSettings.port());
+        } catch (IOException exception) {
+            plugin.getLogger().log(Level.SEVERE, "新 HTTP 监听启动失败，正在回滚原监听", exception);
+            try {
+                ActiveListener rollback = createAndStartListener(previousSettings);
+                this.server = rollback.server();
+                this.executor = rollback.executor();
+                this.activeSettings = previousSettings;
+                plugin.getLogger().warning("已回滚至原 HTTP 监听 "
+                        + previousSettings.host() + ":" + previousSettings.port());
+            } catch (IOException rollbackException) {
+                plugin.getLogger().log(Level.SEVERE, "回滚原 HTTP 监听也失败，远程控制已断开", rollbackException);
+            }
+        }
+    }
+
+    private ActiveListener createAndStartListener(ServerSettings settings) throws IOException {
+        HttpServer httpServer = HttpServer.create(new InetSocketAddress(settings.host(), settings.port()), 0);
+        ExecutorService virtualExecutor = Executors.newVirtualThreadPerTaskExecutor();
+        try {
+            httpServer.setExecutor(virtualExecutor);
+            httpServer.createContext(ControlProtocol.API_STATUS_PATH, this::handleStatus);
+            httpServer.createContext(ControlProtocol.API_TOGGLE_PATH, this::handleToggle);
+            httpServer.createContext(ControlProtocol.API_RELOAD_PATH, this::handleReload);
+            httpServer.start();
+            return new ActiveListener(httpServer, virtualExecutor);
+        } catch (Throwable throwable) {
+            shutdownListener(httpServer, virtualExecutor);
+            throw throwable;
+        }
+    }
+
+    private static void shutdownListener(HttpServer targetServer, ExecutorService targetExecutor) {
+        if (targetServer != null) {
+            targetServer.stop(0);
+        }
+        if (targetExecutor != null) {
+            targetExecutor.close();
+        }
+    }
+
+    private static ReloadResponse appendControlServerFailure(ReloadResponse response, String reason) {
+        List<ReloadFailureDto> failures = new ArrayList<>(response.failures());
+        failures.add(new ReloadFailureDto("control-server", reason));
+        return new ReloadResponse(ReloadStatus.FAILED, response.moduleInfo(), failures,
+                response.moduleKeys(), response.reloadPluginTarget());
+    }
+
+    private static boolean isValidPort(int port) {
+        return port >= 1 && port <= 65535;
     }
 
     private boolean requireMethodAndAuth(HttpExchange exchange, String expectedMethod) throws IOException {
@@ -255,5 +367,14 @@ public class ControlHttpServer {
     }
 
     private record ServerSettings(boolean enabled, String host, int port, String token) {
+    }
+
+    private record ActiveListener(HttpServer server, ExecutorService executor) {
+    }
+
+    private record ReloadExecution(ReloadResponse response, ServerSettings latestSettings) {
+    }
+
+    private record ListenerUpdateResult(String failureReason, Runnable postSendAction) {
     }
 }

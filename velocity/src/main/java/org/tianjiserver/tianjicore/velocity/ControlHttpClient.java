@@ -20,6 +20,7 @@ import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -95,13 +96,27 @@ public class ControlHttpClient implements AutoCloseable {
             String targetInput,
             int timeoutMs
     ) {
+        return reloadTarget(targets, targetInput, timeoutMs, Map.of());
+    }
+
+    /**
+     * 并行向目标子服发送配置/模块重载请求；若遇到 401 且存在旧密钥，则自动回退旧密钥重试一次以支持平滑轮换。
+     */
+    public CompletableFuture<List<ServerCallResult<ReloadResponse>>> reloadTarget(
+            List<BackendServerConfig> targets,
+            String targetInput,
+            int timeoutMs,
+            Map<String, String> fallbackTokens
+    ) {
+        Map<String, String> safeFallbacks = fallbackTokens == null ? Map.of() : fallbackTokens;
         return dispatchAll(targets, server -> sendRequest(
                 server,
                 "POST",
                 ControlProtocol.API_RELOAD_PATH,
                 new ReloadRequest(targetInput),
                 timeoutMs,
-                ReloadResponse.class
+                ReloadResponse.class,
+                safeFallbacks.get(server.normalizedName())
         ).thenApply(result -> {
             if (result.isSuccess()) {
                 ReloadResponse payload = result.payload();
@@ -168,12 +183,55 @@ public class ControlHttpClient implements AutoCloseable {
             int timeoutMs,
             Class<T> responseType
     ) {
+        return sendRequest(server, method, apiPath, requestBody, timeoutMs, responseType, null);
+    }
+
+    private <T> CompletableFuture<ServerCallResult<T>> sendRequest(
+            BackendServerConfig server,
+            String method,
+            String apiPath,
+            Object requestBody,
+            int timeoutMs,
+            Class<T> responseType,
+            String fallbackToken
+    ) {
         if (server.token() == null || server.token().isBlank()) {
             return CompletableFuture.completedFuture(
                     ServerCallResult.failure(server.name(), "未配置控制密钥 (token)")
             );
         }
 
+        HttpRequest primaryRequest = buildHttpRequest(server, method, apiPath, requestBody, timeoutMs);
+        return httpClient.sendAsync(primaryRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .thenCompose(response -> {
+                    if (response.statusCode() == 401
+                            && fallbackToken != null
+                            && !fallbackToken.isBlank()
+                            && !fallbackToken.equals(server.token())) {
+                        BackendServerConfig fallbackServer = new BackendServerConfig(
+                                server.name(), server.normalizedName(), server.baseUri(), fallbackToken);
+                        HttpRequest fallbackRequest = buildHttpRequest(
+                                fallbackServer, method, apiPath, requestBody, timeoutMs);
+                        return httpClient.sendAsync(fallbackRequest,
+                                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                    }
+                    return CompletableFuture.completedFuture(response);
+                })
+                .handle((response, throwable) -> {
+                    if (throwable != null) {
+                        return ServerCallResult.failure(server.name(), describeThrowable(throwable));
+                    }
+                    return parseHttpResponse(server.name(), response, responseType);
+                });
+    }
+
+    private static HttpRequest buildHttpRequest(
+            BackendServerConfig server,
+            String method,
+            String apiPath,
+            Object requestBody,
+            int timeoutMs
+    ) {
         URI targetUri = server.baseUri().resolve(apiPath);
         HttpRequest.Builder builder = HttpRequest.newBuilder(targetUri)
                 .timeout(Duration.ofMillis(timeoutMs))
@@ -186,14 +244,7 @@ public class ControlHttpClient implements AutoCloseable {
             builder.header("Content-Type", ControlProtocol.CONTENT_TYPE_JSON)
                     .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8));
         }
-
-        return httpClient.sendAsync(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                .handle((response, throwable) -> {
-                    if (throwable != null) {
-                        return ServerCallResult.failure(server.name(), describeThrowable(throwable));
-                    }
-                    return parseHttpResponse(server.name(), response, responseType);
-                });
+        return builder.build();
     }
 
     private <T> ServerCallResult<T> parseHttpResponse(

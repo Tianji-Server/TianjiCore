@@ -41,7 +41,7 @@ public class FumoCommand {
     public void handleCraft(Player player, @Optional String name) {
         var activeModule = moduleSupplier.get();
         if (activeModule.isEmpty()) {
-            player.sendMessage(mini.deserialize("<red>玩偶模块当前已关闭，请先使用 /tc toggle fumo 开启。"));
+            player.sendMessage(mini.deserialize("<red>当前子服的玩偶模块已关闭，请先使用 /tc toggle fumo <子服> 开启。"));
             return;
         }
         activeModule.get().openCraftGui(player, name);
